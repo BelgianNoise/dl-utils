@@ -6,6 +6,7 @@ import expressAsyncHandler from 'express-async-handler';
 import { getQueueHandler } from './handlers/get-queue';
 import { postQueueAddHandler } from './handlers/post-queue-add';
 import { getLogger } from './utils/logging';
+import { testDatabaseConnection } from './utils/database';
 
 // Load environment variables from .env file
 config();
@@ -13,7 +14,13 @@ config();
 const logger = getLogger('SERVER');
 
 // Make sure all required environment variables are set
-const requiredEnvVars: string[] = [];
+const requiredEnvVars: string[] = [
+  'POSTGRES_USERNAME',
+  'POSTGRES_PASSWORD',
+  'POSTGRES_HOST',
+  'POSTGRES_PORT',
+  'POSTGRES_DATABASE',
+];
 requiredEnvVars.forEach((envVar) => {
   if (!process.env[envVar]) {
     logger.error(`Missing required environment variable: ${envVar}`);
@@ -29,6 +36,14 @@ requiredPaths.forEach((path) => {
   if (!fs.existsSync(path)) {
     fs.mkdirSync(path);
   }
+});
+
+// Validate database connection
+testDatabaseConnection().then(() => {
+  logger.info('Successfully connected to database');
+}).catch(() => {
+  logger.error('Failed to connect to database, shutting down server');
+  process.exit(1);
 });
 
 const app = express();

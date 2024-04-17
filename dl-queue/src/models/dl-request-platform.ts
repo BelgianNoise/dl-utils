@@ -1,5 +1,5 @@
 export enum DLRequestPlatform {
-  VRTMAX,
-  VTMGO,
-  GOPLAY,
+  VRTMAX = 'VRTMAX',
+  VTMGO = 'VTMGO',
+  GOPLAY = 'GOPLAY',
 }
