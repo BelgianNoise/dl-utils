@@ -1,0 +1,56 @@
+{
+  "folders": [
+    {
+      "name": "root",
+      "path": "."
+    },
+    {
+      "name": "sandbox",
+      "path": "./sandbox"
+    },
+    {
+      "name": "dl-server",
+      "path": "./dl-server"
+    },
+    {
+      "name": "dl-downer",
+      "path": "./dl-downer"
+    },
+    {
+      "name": "dl-queue",
+      "path": "./dl-queue"
+    },
+    {
+      "name": "dl-scraper",
+      "path": "./dl-scraper"
+    },
+    {
+      "name": "dl-viewer",
+      "path": "./dl-viewer"
+    },
+    {
+      "name": "assets",
+      "path": "./assets"
+    }
+  ],
+  "settings": {
+    "eslint.format.enable": true,
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    },
+    "files.eol": "\n",
+    "[json]": {
+      "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[typescript]": {
+      "editor.defaultFormatter": "vscode.typescript-language-features"
+    },
+  },
+  "extensions": {
+    "recommendations": [
+      "dbaeumer.vscode-eslint",
+      "humao.rest-client"
+    ]
+  }
+}
