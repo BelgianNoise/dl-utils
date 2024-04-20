@@ -20,8 +20,8 @@ def validate_server_structure():
       print(f"'{f}' not found.")
       sys.exit(1)
 
-  cook_folder = os.getenv('COOKIES_FOLDER', "./cookies")
+  storage_states_folder = os.getenv('STORAGE_STATES_FOLDER', "./storage_states")
   dl_folder = os.getenv('DOWNLOADS_FOLDER', "./downloads")
-  for f in [cook_folder, dl_folder]:
+  for f in [storage_states_folder, dl_folder]:
     if not os.path.isdir(f):
       os.mkdir(f)

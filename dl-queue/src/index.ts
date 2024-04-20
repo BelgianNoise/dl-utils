@@ -28,10 +28,7 @@ requiredEnvVars.forEach((envVar) => {
   }
 });
 // Make sure all required folder paths exist
-const cookieFolder = process.env.COOKIE_FOLDER || './cookies';
-const requiredPaths = [
-  cookieFolder,
-];
+const requiredPaths: string[] = [];
 requiredPaths.forEach((path) => {
   if (!fs.existsSync(path)) {
     fs.mkdirSync(path);

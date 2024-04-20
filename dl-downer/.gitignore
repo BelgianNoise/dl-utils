@@ -1,6 +1,6 @@
 .env
 downloads
-cookies
+storage_states
 cdm
 __pycache__
 binaries/Logs
