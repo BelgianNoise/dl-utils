@@ -9,10 +9,6 @@
       "path": "./sandbox"
     },
     {
-      "name": "dl-server",
-      "path": "./dl-server"
-    },
-    {
       "name": "dl-downer",
       "path": "./dl-downer"
     },
