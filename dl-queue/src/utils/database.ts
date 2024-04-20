@@ -25,5 +25,5 @@ export function getPoolClient(): Promise<PoolClient> {
 }
 
 export async function testDatabaseConnection(): Promise<void> {
-  await getPool().query('SELECT id FROM dl_request LIMIT 1');
+  await getPool().query('SELECT id FROM dl.dl_request LIMIT 1');
 }

@@ -1,12 +1,13 @@
 import { Request, Response } from 'express';
 import { Logger } from 'pino';
-import { VRTMAXRetriever } from '../retrievers/VRTMAX-retriever';
-import { Retriever } from '../retrievers/retriever';
-import { DLRequest, DLRequestManifestContent, addDownloadRequestToDatabase, addManifestContentToDatabase, urlIsAlreadyPending } from '../models/dl-request';
+import { DLRequest, addDownloadRequestToDatabase, urlIsAlreadyPending } from '../models/dl-request';
+import { DLRequestPlatform } from '../models/dl-request-platform';
+import { DLRequestStatus } from '../models/dl-request-status';
 
 export interface PostQueueAddRequestBody {
   url: string;
   preferredQualityMatcher: string | undefined;
+  outputFilename: string | undefined;
 }
 
 export async function postQueueAddHandler(
@@ -35,7 +36,7 @@ export async function postQueueAddHandler(
     return;
   }
 
-  logger.info(`Received request for URL: ${url}`);
+  logger.child({ url }).info('Received valid request');
 
   // Check if the database already contains a request that is pending for this URL
   if (await urlIsAlreadyPending(url)) {
@@ -44,43 +45,29 @@ export async function postQueueAddHandler(
     return;
   }
 
-  let retriever: Retriever;
+  let downloadRequest: DLRequest = {
+    id: -1,
+    status: DLRequestStatus.PENDING,
+    platform: DLRequestPlatform.UNKNOWN,
+    videoPageOrManifestUrl: url,
+    created: new Date(),
+    updated: new Date(),
+    outputFilename: body.outputFilename || undefined,
+    preferredQualityMatcher: body.preferredQualityMatcher || undefined,
+  };
 
   // Determine which function to call based on the hostname
   if (url.startsWith('https://www.vrt.be/vrtmax/')) {
-    retriever = new VRTMAXRetriever();
-  } else {
-    res.status(400).send('Unsupported URL');
-    return;
-  }
-
-  let downloadRequest: DLRequest;
-  let manifestContent: string | undefined;
-  try {
-    ({ downloadRequest, manifestContent } = await retriever.handle(url, true));
-  } catch (e: unknown) {
-    await retriever.teardown();
-    logger.error(e);
-    res.status(500).send('Internal server error');
-    return;
-  } finally {
-    await retriever.teardown();
-  }
-
-  // Fill preferredQualityMatcher
-  if (body.preferredQualityMatcher) {
-    downloadRequest.preferredQualityMatcher = body.preferredQualityMatcher;
+    downloadRequest.platform = DLRequestPlatform.VRTMAX;
+  } else if (url.startsWith('hhttps://www.vtmgo.be/vtmgo')) {
+    downloadRequest.platform = DLRequestPlatform.VTMGO;
+  } else if (url.startsWith('https://www.goplay.be/')) {
+    downloadRequest.platform = DLRequestPlatform.GOPLAY;
   }
 
   // Write new download request to the database
   downloadRequest = await addDownloadRequestToDatabase(downloadRequest);
-  logger.info(`Added new download request to the database: ${downloadRequest.id}`);
+  logger.child({ url }).info('Added new download request to the database');
 
-  if (manifestContent) {
-    // Write new manifest content to the database
-    const dlManifestContent = await addManifestContentToDatabase(downloadRequest.id, manifestContent);
-    logger.info(`Added new manifest content to the database: ${dlManifestContent.id}`);
-  }
-
-  res.status(201).send();
+  res.status(201).json(downloadRequest);
 }
