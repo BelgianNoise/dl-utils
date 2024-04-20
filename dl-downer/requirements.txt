@@ -1,0 +1,7 @@
+loguru
+requests
+protobuf==3.19.5
+pywidevine
+playwright
+dotenv
+psycopg2-binary
