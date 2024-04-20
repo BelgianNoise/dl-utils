@@ -77,9 +77,11 @@ def extract_vrt_cookies():
       loginButton = page.wait_for_selector('a.realAanmelden')
       loginButton.click()
       emailInput = page.wait_for_selector('input#email-id-email')
-      emailInput.type('king.arthur360+1@gmail.com')
+      assert os.getenv('AUTH_VRTMAX_EMAIL'), 'AUTH_VRTMAX_EMAIL not set'
+      emailInput.type(os.getenv('AUTH_VRTMAX_EMAIL'))
       passwordInput = page.wait_for_selector('input#password-id-password')
-      passwordInput.type('Lo2TVb!ZbgaAXR')
+      assert os.getenv('AUTH_VRTMAX_PASSWORD'), 'AUTH_VRTMAX_PASSWORD not set'
+      passwordInput.type(os.getenv('AUTH_VRTMAX_PASSWORD'))
       submitButton = page.wait_for_selector('form button[type="submit"]')
       submitButton.click()
 
