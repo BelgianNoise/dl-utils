@@ -67,3 +67,54 @@ class Stream():
         with open(f'{init_folder}/{segment}', 'rb') as segment_file:
           init_file.write(segment_file.read())
     logger.debug(f'Added {len(segments)} segments to init.mp4: {init_filename}')
+  
+  def get_tmp_dir(self) -> str:
+    tmp_dir = f'./tmp/{self.id}'
+    os.makedirs(tmp_dir, exist_ok=True)
+    logger.debug(f'Created tmp dir: {tmp_dir}')
+    return tmp_dir
+
+  def cleanup_tmp_dir(self):
+    import shutil
+    tmp_dir = f'./tmp/{self.id}'
+    shutil.rmtree(tmp_dir)
+    logger.debug(f'Removed tmp dir: {tmp_dir}')
+  
+  def finalize_init(self, init_filename: str, output_folder: str) -> str:
+    if "video" in self.__class__.__name__.lower():
+      filename = f'video-{self.id}{f".{self.lang}" if self.lang is not None else ""}.mp4'
+    elif "audio" in self.__class__.__name__.lower():
+      filename = f'audio-{self.id}{f".{self.lang}" if self.lang is not None else ""}.mp4'
+    else:
+      filename = f'{self.id}.mp4'
+    output_filename = f'{output_folder}/{filename}'
+    os.replace(init_filename, output_filename)
+    logger.debug(f'Finalized init.mp4: {init_filename} -> {output_filename}')
+    return output_filename
+
+  def download(
+    self,
+    output_folder: str = None,
+  ) -> str:
+    '''
+    Download stream
+
+    :return: Path to downloaded file
+    '''
+    logger.debug(f'Downloading {self.__class__.__name__} stream: {self}')
+    # create tmp dir
+    unique_tmp_dir = self.get_tmp_dir()
+    # Get the initialization segment
+    init_filename = self.download_init(unique_tmp_dir)
+    # Get all segments
+    self.download_segments(unique_tmp_dir)
+    # add content at end of init.mp4
+    self.add_segments_to_init(init_filename)
+    output_filename = self.finalize_init(init_filename, output_folder)
+
+    logger.debug(f'{self.__class__.__name__} downloaded: {self}')
+
+    # remove unique_tmp_dir dir and its content
+    self.cleanup_tmp_dir()
+
+    return output_filename

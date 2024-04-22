@@ -107,33 +107,47 @@ def goplay_non_drm_video(
     raise Exception('No video streams found')
   logger.debug(f'Selected video streams: {video_streams}')
 
-  # download all video streams concurrently
-  video_files = []
+  first = video_streams[0]
+  last = video_streams[-1]
+  total_segments = last.start_number + last.segments - first.start_number
+  # Do some toomfoolery cause goplay's mpd files don't make sense
+  main_video_stream = first.copy()
+  main_video_stream.segments = total_segments
+  
+  video_streams = []
+  # split into 2 groups
+  # - 2 groups cause this is supposed to run on a single core
+  #   + python usually only runs on a single core
+  group_size = (total_segments//2)+1
+  for i in range(0, main_video_stream.segments, group_size):
+    ss = main_video_stream.copy()
+    ss.start_number = i
+    ss.segments = group_size-1 if i + group_size-1 < total_segments else total_segments - ss.start_number
+    video_streams.append(ss)
+
+  # get the tmp_dir for the video stream
+  video_tmp_dir = main_video_stream.get_tmp_dir()
+  # get the initialization segment
+  init_filename = main_video_stream.download_init(video_tmp_dir)
+
+  start_time = time.time()
+
+  # for every audio stream, download the segments
   with concurrent.futures.ThreadPoolExecutor() as executor:
-    # submit download tasks to executor
-    download_tasks = [executor.submit(video_stream.download, my_tmp_dir) for video_stream in video_streams]
-    # retrieve results as they complete
+    download_tasks = [executor.submit(video_stream.download_segments, video_tmp_dir) for video_stream in video_streams]
     for task in concurrent.futures.as_completed(download_tasks):
       try:
-        # get the downloaded file from the completed task
-        video_files.append(task.result())
+        task.result()
       except Exception as e:
         logger.error(f"Error occurred during video stream download: {str(e)}")
         raise e
 
-  # concatanate all video streams
-  concat_filename = f'{my_tmp_dir}/video.mp4'
-  # correctly order video files
-  concat_list = []
-  for stream in video_streams:
-    # find video_file with id in its name
-    for video_file in video_files:
-      if stream.id in video_file:
-        concat_list.append(video_file)
-        break
-  concat_files(concat_list, concat_filename)
+  logger.info(f'Video download time: {time.time() - start_time}')
 
-  return concat_filename
+  main_video_stream.add_segments_to_init(init_filename)
+  output_filename = main_video_stream.finalize_init(init_filename, my_tmp_dir)
+  main_video_stream.cleanup_tmp_dir()
+  return output_filename
 
 def goplay_non_drm(
   dl_request: DLRequest,
@@ -196,7 +210,7 @@ def GOPLAY_DL(dl_request: DLRequest):
   video_data_resp = requests.get(
     video_data_url,
     headers={
-      'authorization': 'Bearer eyJraWQiOiJCSHZsMjdjNzdGR2J5YWNyTk8xXC9yWXBPTjlzMFFPbjhtUTdzQnA5eCtvbz0iLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIxZDI2YzhjMC04YjkyLTRkMzgtOTJjNC0yMWNlZjliODViY2UiLCJiaXJ0aGRhdGUiOiI5XC8xMFwvMTk5OCAiLCJnZW5kZXIiOiJtIiwiaXNzIjoiaHR0cHM6XC9cL2NvZ25pdG8taWRwLmV1LXdlc3QtMS5hbWF6b25hd3MuY29tXC9ldS13ZXN0LTFfZFZpU3NLTTVZIiwiY3VzdG9tOnBvc3RhbF9jb2RlIjoiMzAwMCIsImN1c3RvbTptaWdyYXRlZF91c2VyIjoiMCIsImN1c3RvbTpzdHJlZXRfYm94IjoiMDMiLCJjdXN0b206c2JzX2NvbmZpcm1lZF92aWVyIjoiMSIsImN1c3RvbTpwaG9uZSI6IjA0NzkzMTUxOTYiLCJjdXN0b206c2JzX2NvbmZpcm1lZF96ZXMiOiI2NjkiLCJjdXN0b206c2VsbGlnZW50SWQiOiIxMjU5NzIwIiwiYXV0aF90aW1lIjoxNzEzNjU0ODkwLCJleHAiOjE3MTM3NDU2NDgsImlhdCI6MTcxMzc0MjA0OCwiZW1haWwiOiJraW5nLmFydGh1cjM2MEBnbWFpbC5jb20iLCJjdXN0b206YWNjb3VudF9jb25zZW50Ijoie1wiYWNjZXB0ZWRcIjp0cnVlLFwiZGF0ZVwiOjE3MDYyOTI3MzZ9IiwiY3VzdG9tOnN0cmVldF9udW1iZXIiOiIxNCIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJhZGRyZXNzIjp7ImZvcm1hdHRlZCI6IkRpZXN0c2VzdHJhYXQifSwicGhvbmVfbnVtYmVyX3ZlcmlmaWVkIjpmYWxzZSwiY29nbml0bzp1c2VybmFtZSI6IjFlNzI2NDdjOTE0ZTRkYzc2YzdlNzc5MWJjMDU0Mjg4ZjgzYTU0ZjQ2NmJkZGVhNTUwOGQ0NTFjZmNmZjBmYzAiLCJjdXN0b206Y2l0eSI6IkxldXZlbiIsImF1ZCI6IjZzMWg4NTFzOHVwbGNvNWg2bXFoMWphYzhtIiwiZXZlbnRfaWQiOiJkMzg1ZDZkZS1mOWQzLTRlNTUtYWVkNC1iZDQyYmQ3YTIxMjgiLCJ0b2tlbl91c2UiOiJpZCIsIm5hbWUiOiJBcnRodXIiLCJmYW1pbHlfbmFtZSI6IkpvcHBhcnQifQ.P9YjyThQJQFPCOlvhgHJ-N8cbCBAL0LcNrtJGoTiq2ZShOqFoc2D3a2DWUDNJYZCnY79sLMxoRpyqK6EBVC-MpkTNg4J4x6oL7q7IFoLJYYSVEz6wqXkvQxNZn5bpof9fTChGXTSMtEeD9_TN8XmN6PslhHg65P7pIQSL_l2bTLCvaerGUzDr7qbNN6Udrh_k6vulyo7HwyLK9FMFJBobvufcZf4Rz7AIfVykcp4fV8NUi6J6Wkx4iyuO4bHPnwmlxyuACT1kizKTBjXGJLKTCtRVSo90-mcOed0y-Qus6uqEWbg8wOot9f8jMZ-AVFZJdDyoTLKKqNGDXBQCYvViQ',
+      'authorization': 'Bearer eyJraWQiOiJCSHZsMjdjNzdGR2J5YWNyTk8xXC9yWXBPTjlzMFFPbjhtUTdzQnA5eCtvbz0iLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIxZDI2YzhjMC04YjkyLTRkMzgtOTJjNC0yMWNlZjliODViY2UiLCJiaXJ0aGRhdGUiOiI5XC8xMFwvMTk5OCAiLCJnZW5kZXIiOiJtIiwiaXNzIjoiaHR0cHM6XC9cL2NvZ25pdG8taWRwLmV1LXdlc3QtMS5hbWF6b25hd3MuY29tXC9ldS13ZXN0LTFfZFZpU3NLTTVZIiwiY3VzdG9tOnBvc3RhbF9jb2RlIjoiMzAwMCIsImN1c3RvbTptaWdyYXRlZF91c2VyIjoiMCIsImN1c3RvbTpzdHJlZXRfYm94IjoiMDMiLCJjdXN0b206c2JzX2NvbmZpcm1lZF92aWVyIjoiMSIsImN1c3RvbTpwaG9uZSI6IjA0NzkzMTUxOTYiLCJjdXN0b206c2JzX2NvbmZpcm1lZF96ZXMiOiI2NjkiLCJjdXN0b206c2VsbGlnZW50SWQiOiIxMjU5NzIwIiwiYXV0aF90aW1lIjoxNzEzNjU0ODkwLCJleHAiOjE3MTM3ODM4NTUsImlhdCI6MTcxMzc4MDI1NSwiZW1haWwiOiJraW5nLmFydGh1cjM2MEBnbWFpbC5jb20iLCJjdXN0b206YWNjb3VudF9jb25zZW50Ijoie1wiYWNjZXB0ZWRcIjp0cnVlLFwiZGF0ZVwiOjE3MDYyOTI3MzZ9IiwiY3VzdG9tOnN0cmVldF9udW1iZXIiOiIxNCIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJhZGRyZXNzIjp7ImZvcm1hdHRlZCI6IkRpZXN0c2VzdHJhYXQifSwicGhvbmVfbnVtYmVyX3ZlcmlmaWVkIjpmYWxzZSwiY29nbml0bzp1c2VybmFtZSI6IjFlNzI2NDdjOTE0ZTRkYzc2YzdlNzc5MWJjMDU0Mjg4ZjgzYTU0ZjQ2NmJkZGVhNTUwOGQ0NTFjZmNmZjBmYzAiLCJjdXN0b206Y2l0eSI6IkxldXZlbiIsImF1ZCI6IjZzMWg4NTFzOHVwbGNvNWg2bXFoMWphYzhtIiwiZXZlbnRfaWQiOiJkMzg1ZDZkZS1mOWQzLTRlNTUtYWVkNC1iZDQyYmQ3YTIxMjgiLCJ0b2tlbl91c2UiOiJpZCIsIm5hbWUiOiJBcnRodXIiLCJmYW1pbHlfbmFtZSI6IkpvcHBhcnQifQ.RBdNyBHE3yiUyUxNJau_RzQk8H8k51RE3x-iUjYm92uajHkgNhjz3wi8WFcwJWDbfa8A3MYm1L4fpDdEGTnzLD-kK_Ln1TToh2LPePWbsq8uSENpKvOcuczxhmkmvC-w8MtZL1AMutF1A64RESRQ45wFowZN-IFE1vwbAUVXKKWt70nsvFfTzvOxzNgWsi5oSBXibKMBR5Qt9cGP8Gf1ur-JT8hOzRj62al5DmEQPBhaRe60oEKj673UsLSnupzp3hzHJFIW1AYlfJSgY6W2nD70G7xhxNJZDH49pY9AgspjKm60d1CG_5viAMQnh05VQWx9P6yFvBz_Jicu3MBcaw',
     },
   )
   if video_data_resp.status_code != 200:
