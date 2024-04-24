@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MPD xmlns="urn:mpeg:dash:schema:mpd:2011" id="2103e7a7-b0d3-44c2-b950-bfff15370a5c" profiles="urn:mpeg:dash:profile:isoff-live:2011,urn:com:dashif:dash264" type="static" mediaPresentationDuration="PT47M46.68S" minBufferTime="PT4S">
+  <BaseURL>https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/</BaseURL>
+  <Period id="72dd5827-44eb-4ff7-8a92-4ddcd4848ad7" duration="PT16M14.6S">
+    <AdaptationSet mimeType="video/mp4" segmentAlignment="true">
+      <Representation width="1280" height="720" frameRate="25" codecs="avc1.64001F" id="25c7e696-e0bc-46f2-a4bb-8e625cf421b7" bandwidth="2300000">
+        <SegmentTemplate timescale="25000" presentationTimeOffset="0" startNumber="0" media="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/video/720/segment_$Number$.m4s" initialization="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/video/720/init.mp4">
+          <SegmentTimeline>
+            <S d="48000"/>
+            <S d="48000" r="505"/>
+            <S d="29000"/>
+          </SegmentTimeline>
+        </SegmentTemplate>
+      </Representation>
+      <Representation width="1920" height="1080" frameRate="25" codecs="avc1.640028" id="e0cac98d-1167-4227-990c-0a9a3cb0d7c2" bandwidth="4300000">
+        <SegmentTemplate timescale="25000" presentationTimeOffset="0" startNumber="0" media="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/video/1080/segment_$Number$.m4s" initialization="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/video/1080/init.mp4">
+          <SegmentTimeline>
+            <S d="48000"/>
+            <S d="48000" r="505"/>
+            <S d="29000"/>
+          </SegmentTimeline>
+        </SegmentTemplate>
+      </Representation>
+      <Representation width="1024" height="576" frameRate="25" codecs="avc1.64001F" id="fba089c2-225f-4271-8ffa-fd47d152508f" bandwidth="1500000">
+        <SegmentTemplate timescale="25000" presentationTimeOffset="0" startNumber="0" media="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/video/576/segment_$Number$.m4s" initialization="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/video/576/init.mp4">
+          <SegmentTimeline>
+            <S d="48000"/>
+            <S d="48000" r="505"/>
+            <S d="29000"/>
+          </SegmentTimeline>
+        </SegmentTemplate>
+      </Representation>
+      <Representation width="768" height="432" frameRate="25" codecs="avc1.64001E" id="831285cd-9eb3-4a3a-89bb-b5002b109672" bandwidth="1000000">
+        <SegmentTemplate timescale="25000" presentationTimeOffset="0" startNumber="0" media="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/video/432/segment_$Number$.m4s" initialization="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/video/432/init.mp4">
+          <SegmentTimeline>
+            <S d="48000"/>
+            <S d="48000" r="505"/>
+            <S d="29000"/>
+          </SegmentTimeline>
+        </SegmentTemplate>
+      </Representation>
+    </AdaptationSet>
+    <AdaptationSet mimeType="audio/mp4" lang="nl" segmentAlignment="true">
+      <AudioChannelConfiguration schemeIdUri="urn:mpeg:dash:23003:3:audio_channel_configuration:2011" value="2"/>
+      <Representation audioSamplingRate="48000" codecs="mp4a.40.2" id="50afcbdf-7818-473c-97e8-6824e2bc5e19" bandwidth="128000">
+        <SegmentTemplate timescale="48000" presentationTimeOffset="0" startNumber="0" media="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/audio/segment_$Number$.m4s" initialization="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/audio/init.mp4">
+          <SegmentTimeline>
+            <S d="92160"/>
+            <S d="92160" r="505"/>
+            <S d="55296"/>
+          </SegmentTimeline>
+        </SegmentTemplate>
+      </Representation>
+    </AdaptationSet>
+  </Period>
+  <Period id="adb46824-2728-438b-a4ed-ad89c018b3c5" duration="PT19M1.68S">
+    <AdaptationSet mimeType="video/mp4" segmentAlignment="true">
+      <Representation width="1280" height="720" frameRate="25" codecs="avc1.64001F" id="a2a99c20-6605-4b38-908e-e5eb698e0b13" bandwidth="2300000">
+        <SegmentTemplate timescale="25000" presentationTimeOffset="24365000" startNumber="508" media="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/video/720/segment_$Number$.m4s" initialization="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/video/720/init.mp4">
+          <SegmentTimeline>
+            <S t="24365000" d="19000"/>
+            <S d="48000" r="593"/>
+            <S d="11000"/>
+          </SegmentTimeline>
+        </SegmentTemplate>
+      </Representation>
+      <Representation width="1920" height="1080" frameRate="25" codecs="avc1.640028" id="6427c241-120b-4f8f-979a-681fd48cb081" bandwidth="4300000">
+        <SegmentTemplate timescale="25000" presentationTimeOffset="24365000" startNumber="508" media="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/video/1080/segment_$Number$.m4s" initialization="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/video/1080/init.mp4">
+          <SegmentTimeline>
+            <S t="24365000" d="19000"/>
+            <S d="48000" r="593"/>
+            <S d="11000"/>
+          </SegmentTimeline>
+        </SegmentTemplate>
+      </Representation>
+      <Representation width="1024" height="576" frameRate="25" codecs="avc1.64001F" id="90e70994-3cd1-4354-af00-ba81d3604eba" bandwidth="1500000">
+        <SegmentTemplate timescale="25000" presentationTimeOffset="24365000" startNumber="508" media="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/video/576/segment_$Number$.m4s" initialization="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/video/576/init.mp4">
+          <SegmentTimeline>
+            <S t="24365000" d="19000"/>
+            <S d="48000" r="593"/>
+            <S d="11000"/>
+          </SegmentTimeline>
+        </SegmentTemplate>
+      </Representation>
+      <Representation width="768" height="432" frameRate="25" codecs="avc1.64001E" id="0131f3c2-8acb-44e3-b75f-dc33c08929a6" bandwidth="1000000">
+        <SegmentTemplate timescale="25000" presentationTimeOffset="24365000" startNumber="508" media="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/video/432/segment_$Number$.m4s" initialization="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/video/432/init.mp4">
+          <SegmentTimeline>
+            <S t="24365000" d="19000"/>
+            <S d="48000" r="593"/>
+            <S d="11000"/>
+          </SegmentTimeline>
+        </SegmentTemplate>
+      </Representation>
+    </AdaptationSet>
+    <AdaptationSet mimeType="audio/mp4" lang="nl" segmentAlignment="true">
+      <AudioChannelConfiguration schemeIdUri="urn:mpeg:dash:23003:3:audio_channel_configuration:2011" value="2"/>
+      <Representation audioSamplingRate="48000" codecs="mp4a.40.2" id="e2864ce2-5e02-4d13-b225-77e309c89595" bandwidth="128000">
+        <SegmentTemplate timescale="48000" presentationTimeOffset="46780416" startNumber="508" media="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/audio/segment_$Number$.m4s" initialization="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/audio/init.mp4">
+          <SegmentTimeline>
+            <S t="46780416" d="36864"/>
+            <S d="92160" r="593"/>
+            <S d="20480"/>
+          </SegmentTimeline>
+        </SegmentTemplate>
+      </Representation>
+    </AdaptationSet>
+  </Period>
+  <Period id="51061455-3f54-4737-ab50-c57e0da7c30b" duration="PT12M30.4S">
+    <AdaptationSet mimeType="video/mp4" segmentAlignment="true">
+      <Representation width="1280" height="720" frameRate="25" codecs="avc1.64001F" id="163a1d46-af8f-4991-8542-ec2918895024" bandwidth="2300000">
+        <SegmentTemplate timescale="25000" presentationTimeOffset="52907000" startNumber="1104" media="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/video/720/segment_$Number$.m4s" initialization="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/video/720/init.mp4">
+          <SegmentTimeline>
+            <S t="52907000" d="37000"/>
+            <S d="48000" r="389"/>
+            <S d="3000"/>
+          </SegmentTimeline>
+        </SegmentTemplate>
+      </Representation>
+      <Representation width="1920" height="1080" frameRate="25" codecs="avc1.640028" id="fb18dae8-7a8e-44ab-acee-68a1db7320ae" bandwidth="4300000">
+        <SegmentTemplate timescale="25000" presentationTimeOffset="52907000" startNumber="1104" media="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/video/1080/segment_$Number$.m4s" initialization="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/video/1080/init.mp4">
+          <SegmentTimeline>
+            <S t="52907000" d="37000"/>
+            <S d="48000" r="389"/>
+            <S d="3000"/>
+          </SegmentTimeline>
+        </SegmentTemplate>
+      </Representation>
+      <Representation width="1024" height="576" frameRate="25" codecs="avc1.64001F" id="d5e74fc8-f7c5-41b6-8da4-f72c422d56f7" bandwidth="1500000">
+        <SegmentTemplate timescale="25000" presentationTimeOffset="52907000" startNumber="1104" media="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/video/576/segment_$Number$.m4s" initialization="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/video/576/init.mp4">
+          <SegmentTimeline>
+            <S t="52907000" d="37000"/>
+            <S d="48000" r="389"/>
+            <S d="3000"/>
+          </SegmentTimeline>
+        </SegmentTemplate>
+      </Representation>
+      <Representation width="768" height="432" frameRate="25" codecs="avc1.64001E" id="04e04cad-8414-409a-8371-af4014f1f513" bandwidth="1000000">
+        <SegmentTemplate timescale="25000" presentationTimeOffset="52907000" startNumber="1104" media="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/video/432/segment_$Number$.m4s" initialization="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/video/432/init.mp4">
+          <SegmentTimeline>
+            <S t="52907000" d="37000"/>
+            <S d="48000" r="389"/>
+            <S d="3000"/>
+          </SegmentTimeline>
+        </SegmentTemplate>
+      </Representation>
+    </AdaptationSet>
+    <AdaptationSet mimeType="audio/mp4" lang="nl" segmentAlignment="true">
+      <AudioChannelConfiguration schemeIdUri="urn:mpeg:dash:23003:3:audio_channel_configuration:2011" value="2"/>
+      <Representation audioSamplingRate="48000" codecs="mp4a.40.2" id="03099e9e-c090-4e00-9fab-ca97c9dbc3e3" bandwidth="128000">
+        <SegmentTemplate timescale="48000" presentationTimeOffset="101580800" startNumber="1104" media="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/audio/segment_$Number$.m4s" initialization="https://stream3-vod.cdn1.sbs.prd.telenet-ops.be/geo/SSAI/DONT_WORRY_BE_HAPPY/S4/E1/10152696945388812/20240415T120023752/audio/init.mp4">
+          <SegmentTimeline>
+            <S t="101580800" d="71680"/>
+            <S d="92160" r="389"/>
+            <S d="7856"/>
+          </SegmentTimeline>
+        </SegmentTemplate>
+      </Representation>
+    </AdaptationSet>
+  </Period>
+</MPD>
