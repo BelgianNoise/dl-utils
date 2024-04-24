@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 from ..models.dl_request_status import DLRequestStatus
@@ -84,3 +85,11 @@ class DLRequest:
     db.putconn(db_conn)
     self.status = new_status
     self.updated = datetime.now()
+
+  def get_full_filename_path(
+    self,
+    filename: str,
+    extension: str = 'mp4',
+  ):
+    save_dir = os.getenv('DOWNLOADS_FOLDER', './downloads')
+    return os.path.join(save_dir, self.platform, f'{filename}.{extension}')

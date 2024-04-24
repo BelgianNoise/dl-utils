@@ -4,13 +4,17 @@ import hmac
 import json
 import re
 import os
+import shutil
 import requests
 import time
 from loguru import logger
 from urllib.parse import urlparse
 
+from ..mpd.mpd import MPD
+from ..mpd.mpd_download_options import MPDDownloadOptions
 from ..models.dl_request_platform import DLRequestPlatform
 from ..models.dl_request import DLRequest
+from ..utils.filename import parse_filename
 from ..utils.local_cdm import Local_CDM
 from ..utils.download_video import download_video
 from ..utils.browser import create_playwright_page, get_storage_state_location, user_agent
@@ -292,7 +296,7 @@ def generate_pssh(content_id):
 
   return pssh_b64
 
-def get_vualto_response(challenge, drm_token):
+def get_license_response(challenge, drm_token):
   '''
   Get Widevine response from Vualto license server
 
@@ -334,33 +338,25 @@ def VRTMAX_DL(dl_request: DLRequest):
 
   filename = dl_request.output_filename
   if not filename:
-    filename = name
-    # Transform 'ik-vraag-het-aan-s1-a1' into 'Ik.Vraag.Het.Aan.S01E01'
-    filename = re.sub(r'[^a-zA-Z0-9]', '.', filename) # Replace non-alphanumeric characters with '.'
-    filename = re.sub(r'\.{2,}', '.', filename) # Replace multiple '.' with a single '.'
-    filename = re.sub(r'\.$', '', filename) # Remove trailing '.'
-    filename = re.sub(r'^\.', '', filename) # Remove leading '.'
-    # Capitalize first letter of each word
-    filename = '.'.join([word.capitalize() for word in filename.split('.')])
-    # Make sure S01E01 is formatted correctly
-    filename = re.sub(r'[Ss](\d{1,3})[Aa](\d{1,3})', lambda x: f'S{x.group(1).zfill(2)}E{x.group(2).zfill(2)}', filename)
+    filename = parse_filename(name)
   logger.debug(f'Filename: {filename}')
 
   if '_nodrm_' in mpd_url or drm_token == None:
     logger.debug('No DRM detected, downloading without decryption')
-    download_video(
-      mpd_url,
-      filename,
-      DLRequestPlatform[dl_request.platform],
-      dl_request.preferred_quality_matcher,
-    )
+
+    mpd = MPD.from_url(mpd_url)
+    download_options = MPDDownloadOptions()
+    if dl_request.preferred_quality_matcher:
+      download_options.preferred_quality_matcher = dl_request.preferred_quality_matcher
+    final_file = mpd.download('./tmp', download_options)
+
   else:
     logger.debug('DRM detected, decrypting ...')
     # Generate keys
     myCDM = Local_CDM()
     pssh = generate_pssh(content_id)
     challenge = myCDM.generate_challenge(pssh)
-    response = get_vualto_response(challenge, drm_token)
+    response = get_license_response(challenge, drm_token)
     keys = myCDM.decrypt_response(response)
     myCDM.close()
 
@@ -372,3 +368,10 @@ def VRTMAX_DL(dl_request: DLRequest):
       dl_request.preferred_quality_matcher,
       keys,
     )
+    # will make changes here later
+    return
+  
+  # move the final file to the downloads folder
+  final_file_move_to = dl_request.get_full_filename_path(filename)
+  shutil.move(final_file, final_file_move_to)
+  logger.debug(f'Downloaded {filename} to {final_file_move_to}')

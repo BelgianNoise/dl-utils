@@ -72,10 +72,7 @@ def GOPLAY_DL(dl_request: DLRequest):
   # download the mpd
   final_file = mpd.download('./tmp', download_options)
   # move the final file to the downloads folder
-  save_dir = os.getenv('DOWNLOADS_FOLDER', './downloads')
-  if not save_dir.endswith('/'):
-    save_dir += '/'
-  save_dir += dl_request.platform
-  shutil.move(final_file, os.path.join(save_dir, title + '.mp4'))
-  logger.debug(f'Downloaded {title} to {save_dir}')
+  final_file_move_to = dl_request.get_full_filename_path(title)
+  shutil.move(final_file, final_file_move_to)
+  logger.debug(f'Downloaded {title} to {final_file_move_to}')
 
