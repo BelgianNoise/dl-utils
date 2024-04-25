@@ -10,6 +10,7 @@ import time
 from loguru import logger
 from urllib.parse import urlparse
 
+from ..pssh_box import pssh_box
 from ..mpd.mpd import MPD
 from ..mpd.mpd_download_options import MPDDownloadOptions
 from ..models.dl_request_platform import DLRequestPlatform
@@ -287,10 +288,13 @@ def generate_pssh(content_id):
   :return: pssh in base64
   '''
   lc = len(content_id)
-  bmff_header = '7073736800000000'
-  wv_systemid = 'edef8ba979d64acea3c827dcd51d21ed'
+  box_size = f'{lc+40:08x}' # 4 bytes
+  bmff_header = '7073736800000000' # box type 'pssh' 8 bytes
+  system_id = 'edef8ba979d64acea3c827dcd51d21ed' # 16 bytes
+  data_size = f'{lc+8:08x}' # 4 bytes
   ending = '48e3dc959b06'
-  pssh = f'{lc+40:08x}{bmff_header+wv_systemid}{lc+8:08x}22{lc:02x}{bytes(content_id, "utf-8").hex()}{ending}'
+  logger.debug(f'll {len(bytes(content_id, "utf-8").hex())} {bytes(content_id, "utf-8").hex()}')
+  pssh = f'{box_size}{bmff_header}{system_id}{data_size}22{lc:02x}{bytes(content_id, "utf-8").hex()}{ending}'
   pssh_b64 = base64.b64encode(bytes.fromhex(pssh)).decode()
   logger.debug(f'PSSH: {pssh_b64}')
 
@@ -341,35 +345,37 @@ def VRTMAX_DL(dl_request: DLRequest):
     filename = parse_filename(name)
   logger.debug(f'Filename: {filename}')
 
+  # initalize mpd object
+  mpd = MPD.from_url(mpd_url)
+  download_options = MPDDownloadOptions()
+  if dl_request.preferred_quality_matcher:
+    download_options.video_resolution = dl_request.preferred_quality_matcher
+
   if '_nodrm_' in mpd_url or drm_token == None:
     logger.debug('No DRM detected, downloading without decryption')
-
-    mpd = MPD.from_url(mpd_url)
-    download_options = MPDDownloadOptions()
-    if dl_request.preferred_quality_matcher:
-      download_options.preferred_quality_matcher = dl_request.preferred_quality_matcher
     final_file = mpd.download('./tmp', download_options)
 
   else:
     logger.debug('DRM detected, decrypting ...')
     # Generate keys
+    pssh = pssh_box.main([
+      '--widevine-system-id',
+      '--content-id', bytes(content_id, "utf-8").hex(),
+      '--protection-scheme', 'cenc',
+      '--base64',
+    ], force_protection_scheme=True)
+    logger.debug(f'PSSH: {pssh}')
+
     myCDM = Local_CDM()
-    pssh = generate_pssh(content_id)
     challenge = myCDM.generate_challenge(pssh)
     response = get_license_response(challenge, drm_token)
     keys = myCDM.decrypt_response(response)
     myCDM.close()
 
-    # Download the video
-    download_video(
-      mpd_url,
-      filename,
-      DLRequestPlatform[dl_request.platform],
-      dl_request.preferred_quality_matcher,
-      keys,
-    )
-    # will make changes here later
-    return
+    # download the video providing the keys
+    download_options.decrypt_keys = keys
+    final_file = mpd.download('./tmp', download_options)
+
   
   # move the final file to the downloads folder
   final_file_move_to = dl_request.get_full_filename_path(filename)
