@@ -74,7 +74,8 @@ class MPD:
     download_options: MPDDownloadOptions = None,
   ) -> str:
     '''Downloads all periods and concatenates them into one file'''
-    logger.debug(f'Downloading MPD {self.base_url}')
+
+    logger.debug(f'Downloading MPD {self.base_url} with options {download_options}')
     # Create a temporary folder
     my_uuid = str(uuid.uuid4())[:8]
     my_tmp_dir = os.path.join(tmp_dir, f'mpd-{my_uuid}')

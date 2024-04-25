@@ -9,7 +9,7 @@ def download_video(
   mpd_url: str,
   filename: str,
   platform: DLRequestPlatform,
-  preferrred_quality: str = '1080',
+  preferrred_quality: str,
   keys={},
   select_audio: str = 'all',
   select_subtitle: str = 'all',

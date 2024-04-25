@@ -35,6 +35,7 @@ class AdaptationSet:
     lang: str = None,
     segment_template = None,
     representations: List[Representation] = [],
+    has_content_protections: bool = False,
   ):
     self.id = id
     self.mime_type = mime_type
@@ -56,6 +57,7 @@ class AdaptationSet:
     self.lang = lang
     self.segment_template = segment_template
     self.representations = representations
+    self.has_content_protections = has_content_protections
   def __str__(self):
     return f'<AdaptationSet(id={self.id}, mime_type={self.mime_type})>'
   def __repr__(self):
@@ -71,6 +73,8 @@ class AdaptationSet:
     representations = []
     for representation in el.findall('./Representation'):
       representations.append(Representation.from_element(representation))
+
+    has_content_protections = True if el.find('./ContentProtection') is not None else False
 
     return AdaptationSet(
       id=el.get('id'),
@@ -93,6 +97,7 @@ class AdaptationSet:
       lang=el.get('lang'),
       segment_template=segment_template,
       representations=representations,
+      has_content_protections=has_content_protections,
     )
 
   def download(
@@ -162,8 +167,13 @@ class AdaptationSet:
     if representation_to_download is None:
       return None
 
+    logger.debug(f'Selected representation: {self.mime_type} | {representation_to_download.codecs} | {representation_to_download.width}x{representation_to_download.height} | {representation_to_download.bandwidth}bps')
     created_file = representation_to_download.download(my_tmp_dir, base_url, self.segment_template)
     
+    if self.has_content_protections:
+      if download_options is None or len(download_options.decrypt_keys) == 0:
+        raise Exception('Content is encrypted, but no decryption keys provided')
+
     if download_options is not None:
       if len(download_options.decrypt_keys) > 0:
         # decrypt the file
