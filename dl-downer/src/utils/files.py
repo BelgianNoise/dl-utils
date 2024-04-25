@@ -5,6 +5,8 @@ from typing import List
 import uuid
 from loguru import logger
 
+from .binaries import get_path_to_binary
+
 def decrypt_file(
   filename: str,
   keys: dict[str, str],
@@ -17,8 +19,7 @@ def decrypt_file(
     f'decrypted-{os.path.basename(filename)}',
   )
 
-  #TODO: use local binary
-  command = [ 'mp4decrypt', '--show-progress' ]
+  command = [ get_path_to_binary('mp4decrypt'), '--show-progress' ]
   for k, v in keys.items():
     command.extend([ '--key', f'{k}:{v}'])
   command.extend([ filename, decrypted_filename ])
@@ -52,8 +53,7 @@ def concat_files(
     for f in files:
       f_write.write(f"file '{os.path.basename(f)}'\n")
 
-  #TODO: use local binary
-  command = [ 'ffmpeg',
+  command = [ get_path_to_binary('ffmpeg'),
     '-f', 'concat',
     '-i', concat_list_file,
     '-safe', '0',
@@ -77,8 +77,7 @@ def merge_files(
   input_files: List[str],
   output_file: str,
 ):
-  # TODO change to ffmpeg from binary folder
-  command=['ffmpeg']
+  command=[get_path_to_binary('ffmpeg')]
   
   for input_file in input_files:
     command.extend([
