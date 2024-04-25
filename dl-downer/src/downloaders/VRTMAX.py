@@ -17,7 +17,7 @@ from ..models.dl_request_platform import DLRequestPlatform
 from ..models.dl_request import DLRequest
 from ..utils.filename import parse_filename
 from ..utils.local_cdm import Local_CDM
-from ..utils.download_video import download_video
+from ..utils.download_video_nre import download_video_nre
 from ..utils.browser import create_playwright_page, get_storage_state_location, user_agent
 
 headers = {
@@ -167,71 +167,6 @@ def get_graphql_metadata(url_path, cookies):
 
   return (name, stream_id)
 
-def generate_playerinfo():
-  '''
-  !! OLD CODE - NOT REQUIRED !!
-  Generate an extra token to get the HD+ .mpd file from the API. Copied from:
-  https://github.com/add-ons/plugin.video.vrt.nu/blob/master/resources/lib/tokenresolver.py#L282
-
-  :return: JWT token
-  '''
-  try:
-    # Extract JWT key id and secret from player javascript
-    response = requests.get('https://player.vrt.be/vrtnu/js/main.js')
-    data = response.text
-    crypt_rx = re.compile(r'atob\(\"(==[A-Za-z0-9+/]*)\"')
-    crypt_data = re.findall(crypt_rx, data)
-    kid_source = crypt_data[0]
-    secret_source = crypt_data[-1]
-    kid = base64.b64decode(kid_source[::-1]).decode('utf-8')
-    secret = base64.b64decode(secret_source[::-1]).decode('utf-8')
-
-    # Extract player version
-    player_version = '2.4.1'
-    pv_rx = re.compile(r'playerVersion:\"(\S*)\"')
-    match = re.search(pv_rx, data)
-    if match:
-      player_version = match.group(1)
-  except:
-    logger.debug('Could not extract JWT secret, download quality will be limited to SD content')
-    return None
-
-  # Generate JWT
-  segments = []
-  header = dict(
-    alg = 'HS256',
-    kid = kid
-  )
-  payload = dict(
-    exp = time.time() + 1000,
-    platform = 'desktop',
-    app = dict(
-      type = 'browser',
-      name = 'Firefox',
-      version = '102.0'
-    ),
-    device = 'undefined (undefined)',
-    os = dict(
-      name = 'Linux',
-      version = 'x86_64'
-    ),
-    player = dict(
-      name = 'VRT web player',
-      version = player_version
-    )
-  )
-  json_header = json.dumps(header).encode()
-  json_payload = json.dumps(payload).encode()
-  segments.append(base64.urlsafe_b64encode(json_header).decode('utf-8').replace('=', ''))
-  segments.append(base64.urlsafe_b64encode(json_payload).decode('utf-8').replace('=', ''))
-  signing_input = '.'.join(segments).encode()
-  signature = hmac.new(secret.encode(), signing_input, hashlib.sha256).digest()
-  segments.append(base64.urlsafe_b64encode(signature).decode('utf-8').replace('=', ''))
-  playerinfo = '.'.join(segments)
-
-  logger.debug(f'Player JWT: {playerinfo}')
-  return playerinfo
-
 def get_video_token(vrt_token, player_info):
   '''
   Get video token from VRT API
@@ -281,25 +216,6 @@ def get_video_metadata(stream_id, video_token):
 
   return (drm_token, mpd_url)
 
-def generate_pssh(content_id):
-  '''
-  Generate PSSH (no KID for VRTMAX)
-
-  :return: pssh in base64
-  '''
-  lc = len(content_id)
-  box_size = f'{lc+40:08x}' # 4 bytes
-  bmff_header = '7073736800000000' # box type 'pssh' 8 bytes
-  system_id = 'edef8ba979d64acea3c827dcd51d21ed' # 16 bytes
-  data_size = f'{lc+8:08x}' # 4 bytes
-  ending = '48e3dc959b06'
-  logger.debug(f'll {len(bytes(content_id, "utf-8").hex())} {bytes(content_id, "utf-8").hex()}')
-  pssh = f'{box_size}{bmff_header}{system_id}{data_size}22{lc:02x}{bytes(content_id, "utf-8").hex()}{ending}'
-  pssh_b64 = base64.b64encode(bytes.fromhex(pssh)).decode()
-  logger.debug(f'PSSH: {pssh_b64}')
-
-  return pssh_b64
-
 def get_license_response(challenge, drm_token):
   '''
   Get Widevine response from Vualto license server
@@ -328,9 +244,7 @@ def VRTMAX_DL(dl_request: DLRequest):
   cookies = requests.utils.cookiejar_from_dict({c['name']:c['value'] for c in cookies})
 
   name, stream_id = get_graphql_metadata(url_path, cookies)
-  # player_info = generate_playerinfo()
-  player_info = ''
-  video_token = get_video_token(vrt_token, player_info)
+  video_token = get_video_token(vrt_token, '')
   drm_token, mpd_url = get_video_metadata(stream_id, video_token)
 
   # Old and new MPD URL format are both still in use
@@ -345,18 +259,9 @@ def VRTMAX_DL(dl_request: DLRequest):
     filename = parse_filename(name)
   logger.debug(f'Filename: {filename}')
 
-  # initalize mpd object
-  mpd = MPD.from_url(mpd_url)
-  download_options = MPDDownloadOptions()
-  if dl_request.preferred_quality_matcher:
-    download_options.video_resolution = dl_request.preferred_quality_matcher
-
-  if '_nodrm_' in mpd_url or drm_token == None:
-    logger.debug('No DRM detected, downloading without decryption')
-    final_file = mpd.download('./tmp', download_options)
-
-  else:
-    logger.debug('DRM detected, decrypting ...')
+  # retrieve the keys if DRM
+  keys = {}
+  if '_drm_' in mpd_url or drm_token:
     # Generate keys
     pssh = pssh_box.main([
       '--widevine-system-id',
@@ -372,11 +277,25 @@ def VRTMAX_DL(dl_request: DLRequest):
     keys = myCDM.decrypt_response(response)
     myCDM.close()
 
-    # download the video providing the keys
-    download_options.decrypt_keys = keys
-    final_file = mpd.download('./tmp', download_options)
-
-  
+  # download the video
+  download_video_nre(
+    mpd_url,
+    filename,
+    DLRequestPlatform.VRTMAX,
+    dl_request.preferred_quality_matcher,
+    keys=keys,
+  )
+  return
+  # ---------- Using own MPD downloader ----------
+  # initalize mpd object
+  mpd = MPD.from_url(mpd_url)
+  download_options = MPDDownloadOptions()
+  if dl_request.preferred_quality_matcher:
+    download_options.video_resolution = dl_request.preferred_quality_matcher
+  if len(keys) > 0:
+    download_options.keys = keys
+  logger.debug('No DRM detected, downloading without decryption')
+  final_file = mpd.download('./tmp', download_options)
   # move the final file to the downloads folder
   final_file_move_to = dl_request.get_full_filename_path(filename)
   shutil.move(final_file, final_file_move_to)

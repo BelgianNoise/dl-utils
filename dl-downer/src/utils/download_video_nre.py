@@ -5,7 +5,7 @@ from loguru import logger
 from ..models.dl_request_platform import DLRequestPlatform
 from .binaries import get_path_to_binary
 
-def download_video(
+def download_video_nre(
   mpd_url: str,
   filename: str,
   platform: DLRequestPlatform,
