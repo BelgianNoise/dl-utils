@@ -6,10 +6,82 @@ import requests
 
 from loguru import logger
 
+
 from ..mpd.mpd import MPD
 from ..mpd.mpd_download_options import MPDDownloadOptions
+from ..utils.browser import create_playwright_page, get_storage_state_location
+from ..utils.download_video_nre import download_video_nre
+from ..utils.local_cdm import Local_CDM
 from ..utils.filename import parse_filename
+from ..models.dl_request_platform import DLRequestPlatform
 from ..models.dl_request import DLRequest
+
+def handle_goplay_consent_popup(page):
+  '''
+  Handle consent popup if it appears
+  '''
+  try:
+    logger.debug('Accepting cookies')
+    page.wait_for_selector('#didomi-popup', timeout=2000)
+  except:
+    logger.debug(f'No consent popup found:')
+    return
+  acceptButton = page.wait_for_selector('button#didomi-notice-agree-button')
+  acceptButton.click()
+  logger.debug('Cookies accepted')
+
+def extract_goplay_bearer_token() -> str:
+  '''
+  Get bearer token from a headless browser performing a real login
+  '''
+  bearer_token = ''
+  state_file = get_storage_state_location(DLRequestPlatform.GOPLAY)
+  try:
+    playwright, browser, page = create_playwright_page(DLRequestPlatform.GOPLAY)
+
+    page.goto("https://www.goplay.be/profiel", wait_until='networkidle')
+    handle_goplay_consent_popup(page)
+
+    try:
+      page.wait_for_selector('span.profile-page__header__email', timeout=2000)
+      logger.debug('Already logged in')
+      page.context.storage_state(path=state_file)
+    except:
+      logger.debug('Logging in ...')
+      openLogin = page.wait_for_selector('div.not-logged-in button')
+      openLogin.click()
+      emailInput = page.wait_for_selector('input#email')
+      assert os.getenv('AUTH_GOPLAY_EMAIL'), 'AUTH_GOPLAY_EMAIL not set'
+      emailInput.type(os.getenv('AUTH_GOPLAY_EMAIL'))
+      passwordInput = page.wait_for_selector('input#password')
+      assert os.getenv('AUTH_GOPLAY_PASSWORD'), 'AUTH_GOPLAY_PASSWORD not set'
+      passwordInput.type(os.getenv('AUTH_GOPLAY_PASSWORD'))
+      submitButton = page.wait_for_selector('form button[type="submit"]')
+      submitButton.click()
+
+      # find h2 element with test 'Mijn lijst'
+      page.wait_for_selector('span.profile-page__header__email')
+      logger.debug('Logged in successfully')
+      page.context.storage_state(path=state_file)
+
+  finally:
+    if browser is not None:
+      browser.close()
+    if playwright is not None:
+      playwright.stop()
+
+  # read idToken from state file
+  with open(state_file, 'r') as f:
+    state = json.load(f)
+    for origin in state['origins']:
+      if origin['origin'] == 'https://www.goplay.be':
+        local_storage_entries = origin['localStorage']
+        for entry in local_storage_entries:
+          if entry['name'] and entry['name'].endswith('idToken'):
+            bearer_token = entry['value']
+            break
+  logger.debug(f'Bearer: {bearer_token}')
+  return bearer_token
 
 def GOPLAY_DL(dl_request: DLRequest):
 
@@ -40,11 +112,10 @@ def GOPLAY_DL(dl_request: DLRequest):
   # get video data
   video_data_url = f'https://api.goplay.be/web/v1/videos/{type_form}/{video_uuid}'
   logger.debug(f'Video data URL: {video_data_url}')
+  bearer_token = extract_goplay_bearer_token()
   video_data_resp = requests.get(
     video_data_url,
-    headers={
-      'authorization': 'Bearer eyJraWQiOiJCSHZsMjdjNzdGR2J5YWNyTk8xXC9yWXBPTjlzMFFPbjhtUTdzQnA5eCtvbz0iLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIxZDI2YzhjMC04YjkyLTRkMzgtOTJjNC0yMWNlZjliODViY2UiLCJiaXJ0aGRhdGUiOiI5XC8xMFwvMTk5OCAiLCJnZW5kZXIiOiJtIiwiaXNzIjoiaHR0cHM6XC9cL2NvZ25pdG8taWRwLmV1LXdlc3QtMS5hbWF6b25hd3MuY29tXC9ldS13ZXN0LTFfZFZpU3NLTTVZIiwiY3VzdG9tOnBvc3RhbF9jb2RlIjoiMzAwMCIsImN1c3RvbTptaWdyYXRlZF91c2VyIjoiMCIsImN1c3RvbTpzdHJlZXRfYm94IjoiMDMiLCJjdXN0b206c2JzX2NvbmZpcm1lZF92aWVyIjoiMSIsImN1c3RvbTpwaG9uZSI6IjA0NzkzMTUxOTYiLCJjdXN0b206c2JzX2NvbmZpcm1lZF96ZXMiOiI2NjkiLCJjdXN0b206c2VsbGlnZW50SWQiOiIxMjU5NzIwIiwiYXV0aF90aW1lIjoxNzEzNjU0ODkwLCJleHAiOjE3MTM5NjMwNzEsImlhdCI6MTcxMzk1OTQ3MSwiZW1haWwiOiJraW5nLmFydGh1cjM2MEBnbWFpbC5jb20iLCJjdXN0b206YWNjb3VudF9jb25zZW50Ijoie1wiYWNjZXB0ZWRcIjp0cnVlLFwiZGF0ZVwiOjE3MDYyOTI3MzZ9IiwiY3VzdG9tOnN0cmVldF9udW1iZXIiOiIxNCIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJhZGRyZXNzIjp7ImZvcm1hdHRlZCI6IkRpZXN0c2VzdHJhYXQifSwicGhvbmVfbnVtYmVyX3ZlcmlmaWVkIjpmYWxzZSwiY29nbml0bzp1c2VybmFtZSI6IjFlNzI2NDdjOTE0ZTRkYzc2YzdlNzc5MWJjMDU0Mjg4ZjgzYTU0ZjQ2NmJkZGVhNTUwOGQ0NTFjZmNmZjBmYzAiLCJjdXN0b206Y2l0eSI6IkxldXZlbiIsImF1ZCI6IjZzMWg4NTFzOHVwbGNvNWg2bXFoMWphYzhtIiwiZXZlbnRfaWQiOiJkMzg1ZDZkZS1mOWQzLTRlNTUtYWVkNC1iZDQyYmQ3YTIxMjgiLCJ0b2tlbl91c2UiOiJpZCIsIm5hbWUiOiJBcnRodXIiLCJmYW1pbHlfbmFtZSI6IkpvcHBhcnQifQ.iFKYt5HDav28EtFQC57aiuhrXG8bvo8st33isvd9aRWkkeexGn_ZRk0ocFHUskZmpPxLUahliheAZnfm4-owM6IvLDn82Jj8BU__HMoZqsalmfNNpjWBS768rUs24p70xz0BuDFFiMur9Nuyt-ylQ346Tmcs5QgMCSzx3eMJYrhzAyhTc-cY24QhEwhSlmGacZ8jCYnkABVg26tWXwPCWmLgoNIat_PEUrabIPCPkeGOLTLSRPyPh4ZYH1lnpdhqxI19f_AwjPiMY3O7iGdgwbmzljOTOybfKxQBr535qtMIWznaBHsfbdsFsLJnyoYGrvwgn52DeF-9Ve4nGm7Jfw',
-    },
+    headers={ 'authorization': f'Bearer {bearer_token}' },
   )
   if video_data_resp.status_code != 200:
     logger.debug(video_data_resp.text)
@@ -61,18 +132,38 @@ def GOPLAY_DL(dl_request: DLRequest):
   logger.debug(f'Stream manifest: {stream_manifest}')
   
   if is_drm:
-    # do key shenanigans later
-    raise Exception('DRM protected content not supported yet')
-  
-  mpd = MPD.from_url(stream_manifest)
-  download_options = MPDDownloadOptions()
-  # set the preferred quality matcher
-  if dl_request.preferred_quality_matcher:
-    download_options.video_resolution = dl_request.preferred_quality_matcher
-  # download the mpd
-  final_file = mpd.download('./tmp', download_options)
-  # move the final file to the downloads folder
-  final_file_move_to = dl_request.get_full_filename_path(title)
-  shutil.move(final_file, final_file_move_to)
-  logger.debug(f'Downloaded {title} to {final_file_move_to}')
+    drm_xml = video_data['drmXml']
+    logger.debug(f'DRM XML: {drm_xml}')
+    manifest_response = requests.get(stream_manifest)
+    pssh = re.findall(r'<pssh[^>]*>(.{,120})</pssh>', manifest_response.text)[0]
+    logger.debug(f'PSSH: {pssh}')
+    cdm = Local_CDM()
+    challenge = cdm.generate_challenge(pssh)
+    headers = { 'Customdata': drm_xml }
+    lic_res = requests.post('https://wv-keyos.licensekeyserver.com/', data=challenge, headers=headers)
+    lic_res.raise_for_status()
+    keys = cdm.decrypt_response(lic_res.content)
+    logger.debug(f'Keys: {keys}')
+    download_video_nre(
+      stream_manifest,
+      title,
+      DLRequestPlatform.GOPLAY,
+      dl_request.preferred_quality_matcher,
+      keys=keys,
+    )
+    return
+  else:
+    # use own downloader cause goplay's mpd file doesn't go well with n_m3u8dl_re
+    mpd = MPD.from_url(stream_manifest)
+    download_options = MPDDownloadOptions()
+    # set the preferred quality matcher
+    if dl_request.preferred_quality_matcher:
+      download_options.video_resolution = dl_request.preferred_quality_matcher
+    # download the mpd
+    final_file = mpd.download('./tmp', download_options)
+    # move the final file to the downloads folder
+    final_file_move_to = dl_request.get_full_filename_path(title)
+    shutil.move(final_file, final_file_move_to)
+    logger.debug(f'Downloaded {title} to {final_file_move_to}')
+    return
 

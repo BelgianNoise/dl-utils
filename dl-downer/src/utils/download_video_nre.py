@@ -45,6 +45,7 @@ def download_video_nre(
     '--select-audio', select_audio,
     '--select-subtitle', select_subtitle,
     '--concurrent-download',
+    '--no-log',
     '--tmp-dir', f'./tmp/{platform.value}',
     '--mux-after-done', 'format=mkv:muxer=ffmpeg',
     '--save-dir', save_dir,
