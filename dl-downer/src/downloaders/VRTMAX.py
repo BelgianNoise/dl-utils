@@ -159,13 +159,19 @@ def get_graphql_metadata(url_path, cookies):
   # logger.debug(f'GraphQL response: {response.text}')
   body = response.json()
 
-  name = body['data']['page']['episode']['name']
-  logger.debug(f'Name: {name}')
+  episode_name = body['data']['page']['episode']['name']
+  program_title = body['data']['page']['episode']['program']['title']
+  s_and_e = re.search(r'[sS]\d{1,4}[eEaA]\d{1,4}', episode_name)
+  if s_and_e:
+    title = f'{program_title} {s_and_e.group(0)}'
+  else:
+    title = episode_name
+  logger.debug(f'Title: {title}')
 
   stream_id = body['data']['page']['episode']['watchAction']['streamId']
   logger.debug(f'Stream ID: {stream_id}')
 
-  return (name, stream_id)
+  return (title, stream_id)
 
 def get_video_token(vrt_token, player_info):
   '''
@@ -243,7 +249,7 @@ def VRTMAX_DL(dl_request: DLRequest):
   # Transform List[Cookies] into RequestsCookieJar
   cookies = requests.utils.cookiejar_from_dict({c['name']:c['value'] for c in cookies})
 
-  name, stream_id = get_graphql_metadata(url_path, cookies)
+  title, stream_id = get_graphql_metadata(url_path, cookies)
   video_token = get_video_token(vrt_token, '')
   drm_token, mpd_url = get_video_metadata(stream_id, video_token)
 
@@ -256,7 +262,7 @@ def VRTMAX_DL(dl_request: DLRequest):
 
   filename = dl_request.output_filename
   if not filename:
-    filename = parse_filename(name)
+    filename = parse_filename(title)
   logger.debug(f'Filename: {filename}')
 
   # retrieve the keys if DRM

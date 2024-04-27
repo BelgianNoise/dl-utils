@@ -1,6 +1,9 @@
 import re
 
-def parse_filename(input: str) -> str:
+def parse_filename(
+  input: str,
+  lang: str = 'nl',
+) -> str:
   '''
   Parse a string into a valid filename
   '''
@@ -9,8 +12,11 @@ def parse_filename(input: str) -> str:
   invalid_chars = ['&#039;']
   for char in invalid_chars:
     filename = filename.replace(char, '')
+
+  # Replace & with 'En'
+  filename = re.sub(r'&', ' En ' if lang == 'nl' else ' And ', filename)
   # Replace non-alphanumeric characters with '.'
-  filename = re.sub(r'[^a-zA-Z0-9]', '.', filename)
+  filename = re.sub(r'[^a-zA-Z0-9@]', '.', filename)
   # Replace multiple '.' with a single '.'
   filename = re.sub(r'\.{2,}', '.', filename)
   # Remove trailing '.'
