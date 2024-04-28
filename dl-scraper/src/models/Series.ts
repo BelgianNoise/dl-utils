@@ -1,6 +1,7 @@
 import { Language } from './language';
 
-export interface Serie {
+export interface Series {
+  platformSpecificId: string | undefined;
   title: string;
   description: string;
   language: Language;
@@ -10,12 +11,14 @@ export interface Serie {
 }
 
 export interface Season {
+  platformSpecificId: string | undefined;
   title: string;
   episodes: Episode[];
   poster: string;
 }
 
 export interface Episode {
+  platformSpecificId: string | undefined;
   title: string;
   number: number;
   description: string;

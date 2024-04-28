@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import { Browser, CookieParam, Page, executablePath } from 'puppeteer';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
-import { Serie } from '../models/Serie';
+import { Series } from '../models/Series';
 import { Movie } from '../models/movie';
 
 export interface ScraperOptions {
@@ -10,8 +10,8 @@ export interface ScraperOptions {
 }
 
 export abstract class Scraper {
-  protected checkForCookiePopup: boolean = true;
   protected cookieFileLocation: string;
+  protected userAgent: string = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 OPR/107.0.0.0';
   private browser: Browser | undefined = undefined;
 
   public constructor(cookieFileLocation?: string) {
@@ -39,13 +39,11 @@ export abstract class Scraper {
     await this.getAllMovies();
   }
 
-  private async createDefaultBrowser(
-    headless = false,
-  ): Promise<Browser> {
+  private async createDefaultBrowser(): Promise<Browser> {
     puppeteer.use(StealthPlugin());
     // Launch the browser and open a new blank page
     const browser = await puppeteer.launch({
-      headless: headless,
+      headless: process.env.HEADLESS !== 'false',
       executablePath: executablePath(),
     });
 
@@ -59,6 +57,18 @@ export abstract class Scraper {
     return this.browser;
   }
 
+  protected async getCookies(): Promise<CookieParam[]> {
+    try {
+      const cookiesString = await fs.readFile(this.cookieFileLocation);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const cookies: CookieParam[] = JSON.parse(cookiesString.toString());
+      return cookies;
+    } catch {
+      console.log('no cookies found for', this.cookieFileLocation);
+      return [];
+    }
+  }
+
   protected async getBlankPage(): Promise<Page> {
     const page = await this.getBrowser().newPage();
     await page.setExtraHTTPHeaders({
@@ -66,15 +76,13 @@ export abstract class Scraper {
     });
 
     try {
-      const cookiesString = await fs.readFile(this.cookieFileLocation);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const cookies: CookieParam[] = JSON.parse(cookiesString.toString());
+      const cookies = await this.getCookies();
       await page.setCookie(...cookies);
     } catch {
       console.log('no cookies found for', this.cookieFileLocation);
     }
 
-    await page.setViewport({width: 1920, height: 1080});
+    await page.setViewport({width: 1280, height: 720});
     await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 OPR/105.0.0.0');
 
     return page;
@@ -90,7 +98,13 @@ export abstract class Scraper {
     console.log('Cookies saved!');
   }
 
+  protected getAllHeadersForFetch(): Record<string, string> {
+    return {
+      'User-Agent': this.userAgent,
+    };
+  }
+
   protected abstract handleCookiePopup(page: Page): Promise<void>;
-  public abstract getAllSeries(): Promise<Serie[]>;
+  public abstract getAllSeries(): Promise<Series[]>;
   public abstract getAllMovies(): Promise<Movie[]>;
 }

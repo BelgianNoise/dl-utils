@@ -1,6 +1,7 @@
 export enum Language {
-  NLBE = 'nl-BE',
-  NLNL = 'nl-NL',
-  EN = 'en',
-  UNKNOWN = 'unknown',
+  FLEMMISH = 'FLEMMISH',
+  DUTCH = 'DUTCH',
+  FRENCH = 'FRENCH',
+  ENGLISH = 'ENGLISH',
+  UNKNOWN = 'UNKNOWN',
 }

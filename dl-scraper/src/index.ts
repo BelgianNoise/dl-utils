@@ -1,9 +1,12 @@
+import { config } from 'dotenv';
 import { Scraper } from './scraper/scraper';
 import { VRTScraper } from './scraper/vrt-scraper';
 
 console.log('STARTING...');
 
 async function main() {
+  config();
+
   const scrapers: Scraper[] = [
     new VRTScraper(),
   ];
