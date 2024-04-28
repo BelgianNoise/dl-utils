@@ -8,10 +8,17 @@ def parse_filename(
   Parse a string into a valid filename
   '''
   filename = input
-  # Replace all special characters
-  invalid_chars = ['&#039;']
-  for char in invalid_chars:
-    filename = filename.replace(char, '')
+
+  special_char_map = {
+    'à': 'a', 'á': 'a', 'â': 'a', 'ã': 'a', 'ä': 'a',
+    'å': 'a', 'æ': 'ae', 'ç': 'c', 'è': 'e', 'é': 'e',
+    'ê': 'e', 'ë': 'e', 'ì': 'i', 'í': 'i', 'î': 'i', 'ï': 'i',
+    'ð': 'd', 'ñ': 'n', 'ò': 'o', 'ó': 'o', 'ô': 'o', 'õ': 'o',
+    'ö': 'o', 'ø': 'o', 'ù': 'u', 'ú': 'u', 'û': 'u', 'ü': 'u',
+    'ý': 'y', 'ÿ': 'y',
+  }
+  for char, replacement in special_char_map.items():
+    filename = re.sub(char, replacement, filename)
 
   # Replace & with 'En'
   filename = re.sub(r'&', ' En ' if lang == 'nl' else ' And ', filename)
