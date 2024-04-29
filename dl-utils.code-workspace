@@ -13,12 +13,8 @@
       "path": "./dl-queue"
     },
     {
-      "name": "dl-scraper",
-      "path": "./dl-scraper"
-    },
-    {
-      "name": "dl-viewer",
-      "path": "./dl-viewer"
+      "name": "dl-chrome-extension",
+      "path": "./dl-chrome-extension"
     },
     {
       "name": "assets",
