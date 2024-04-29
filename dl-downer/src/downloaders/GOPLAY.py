@@ -131,6 +131,8 @@ def GOPLAY_DL(dl_request: DLRequest):
   stream_manifest = streams['stream_manifest']
   logger.debug(f'Stream manifest: {stream_manifest}')
   
+  keys = {}
+
   if is_drm:
     drm_xml = video_data['drmXml']
     logger.debug(f'DRM XML: {drm_xml}')
@@ -144,26 +146,18 @@ def GOPLAY_DL(dl_request: DLRequest):
     lic_res.raise_for_status()
     keys = cdm.decrypt_response(lic_res.content)
     logger.debug(f'Keys: {keys}')
-    download_video_nre(
-      stream_manifest,
-      title,
-      DLRequestPlatform.GOPLAY,
-      dl_request.preferred_quality_matcher,
-      keys=keys,
-    )
-    return
-  else:
-    # use own downloader cause goplay's mpd file doesn't go well with n_m3u8dl_re
-    mpd = MPD.from_url(stream_manifest)
-    download_options = MPDDownloadOptions()
-    # set the preferred quality matcher
-    if dl_request.preferred_quality_matcher:
-      download_options.video_resolution = dl_request.preferred_quality_matcher
-    # download the mpd
-    final_file = mpd.download('./tmp', download_options)
-    # move the final file to the downloads folder
-    final_file_move_to = dl_request.get_full_filename_path(title)
-    shutil.move(final_file, final_file_move_to)
-    logger.debug(f'Downloaded {title} to {final_file_move_to}')
-    return
 
+  # use own downloader cause goplay's mpd file doesn't go well with n_m3u8dl_re
+  mpd = MPD.from_url(stream_manifest)
+  download_options = MPDDownloadOptions()
+  # set the preferred quality matcher
+  if dl_request.preferred_quality_matcher:
+    download_options.video_resolution = dl_request.preferred_quality_matcher
+  if len(keys) > 0:
+    download_options.decrypt_keys = keys
+  # download the mpd
+  final_file = mpd.download('./tmp', download_options)
+  # move the final file to the downloads folder
+  final_file_move_to = dl_request.get_full_filename_path(title)
+  shutil.move(final_file, final_file_move_to)
+  logger.debug(f'Downloaded {title} to {final_file_move_to}')
