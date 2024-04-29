@@ -3,6 +3,7 @@ import { Logger } from 'pino';
 import { DLRequest, addDownloadRequestToDatabase, urlIsAlreadyPending } from '../models/dl-request';
 import { DLRequestPlatform } from '../models/dl-request-platform';
 import { DLRequestStatus } from '../models/dl-request-status';
+import { allowAllCORS } from '../utils/cors';
 
 export interface PostQueueAddRequestBody {
   url: string;
@@ -15,6 +16,8 @@ export async function postQueueAddHandler(
   res: Response,
   logger: Logger,
 ): Promise<void> {
+  allowAllCORS(req, res);
+
   // Must be Content-Type: application/json
   const contentType = req.get('Content-Type');
   if (contentType !== 'application/json') {

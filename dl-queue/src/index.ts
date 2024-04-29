@@ -7,6 +7,7 @@ import { getQueueHandler } from './handlers/get-queue';
 import { postQueueAddHandler } from './handlers/post-queue-add';
 import { getLogger } from './utils/logging';
 import { testDatabaseConnection } from './utils/database';
+import { allowAllCORS } from './utils/cors';
 
 // Load environment variables from .env file
 config();
@@ -52,6 +53,11 @@ app.get('/queue', (req, res) => {
   void getQueueHandler(req, res);
 });
 
+app.options('/queue/add', (req, res) => {
+  logger.info('OPTIONS /queue/add');
+  allowAllCORS(req, res);
+  res.sendStatus(200);
+});
 app.post('/queue/add', expressAsyncHandler( async(req, res) => {
   logger.info('POST /queue/add');
   await postQueueAddHandler(req, res, logger);
