@@ -128,7 +128,8 @@ class SegmentTemplate:
       response = requests.get(segment_url)
       with open(segment_file, 'wb') as f:
         f.write(response.content)
-    max_threads = 4
+    # use 4 or 75% of CPU threads, whichever is higher
+    max_threads = max(4, int(os.cpu_count() * 0.75))
     logger.debug(f'Using {max_threads} threads to download segments')
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
       futures = []
