@@ -2,9 +2,16 @@
 
 This project aims to aid me in downloading videos from certain content providers.
 The downloaded files are strictly for personal use only without any intend to break user agreements.
-The focus lays not on illegally acquiring video content, content that is stored behind a paywall is only to be consumed when actively paying for that service.
+The focus lies not on illegally acquiring or consuming video content, content is only to be consumed in accordance to the platform's terms of service.
 
 This project consists of 4 subprojects that can mostly be used on their own, this is done to reduce debugging complexity and maximize availability.
+
+Currently supported content providers:
+- [x] VRT MAX         (dl-downer, dl-queue, dl-chrome-extension)
+- [x] GoPlay          (dl-downer, dl-queue)
+- [ ] VTM GO
+- [ ] Streamz
+- [ ] NPO Start
 
 ## [dl-downer](dl-downer/)
 
@@ -16,16 +23,10 @@ Express.js server exposing 2 endpoints:
 1. `POST /queue/add` - to add download requests to the queue (authenticated)
 2. `GET /queue` - get json representation of the current download queue
 
-In the background, this server will emulate a browser to retrieve the required parameters to handle a request.
+This service acts as a middleman between the chrome extension and the downloader, it stores download requests in a PostgreSQL database for the downloader to pick up.
+This makes it so that the chrome extension can be used on any device without exposing any sensitive information and keeps the downloader from being exposed to the internet.
 
-## [dl-scraper](dl-scraper/)
+## [dl-chrome-extension](dl-chrome-extension/)
 
-A webcrawler/-scraper written in TypeScript using puppeteer to scrape content provider's websites and/or APIs for available content.
-Data is stored in a PostgreSQL database to be used in other places.
-
-## [dl-viewer](dl-viewer/)
-
-Next.js server hosted on Vercel using DaisyUI components. This service provives a frontend for all data retrieved and/or handled by the other services listed in this README file.
-- search content retrieved by `dl-scraper`
-- send download requests to `dl-queue`
-- show download queue from `dl-queue`
+This chrome extension adds a download button to all supported websutes, when clicked it sends a download request to the queue service.
+It also shows an overview of the all download requests in the queue, already completed or failed.
