@@ -1,6 +1,6 @@
 import React from "react";
 import "./download-button.css";
-import DownloadSVG from "./download-svg";
+import SVGDownload from "../svg/svg-download";
 
 const DownloadButton = () => {
   function onClick() {
@@ -25,7 +25,7 @@ const DownloadButton = () => {
 
   return (
     <button onClick={onClick}>
-      <DownloadSVG />
+      <SVGDownload />
       <span>Download</span>
     </button>
   );

@@ -1,0 +1,25 @@
+dialog {
+  border: none;
+  border-radius: 10px;
+  margin-top: 30px;
+  width: 80%;
+  max-height: 70%;
+  padding: var(--gap-normal);
+
+  background: var(--color-background-light);
+  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
+  color: inherit;
+}
+/* opened dialog */
+dialog[open] {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--gap-normal);
+}
+
+dialog .buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+}

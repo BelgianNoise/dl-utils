@@ -1,6 +1,6 @@
 import React from "react";
 
-const DownloadSVG = (props: {
+const SVGDownload = (props: {
   color?: string,
   width?: string,
   height?: string,
@@ -19,4 +19,4 @@ const DownloadSVG = (props: {
   );
 };
 
-export default DownloadSVG;
+export default SVGDownload;
