@@ -91,19 +91,29 @@ def GOPLAY_DL(dl_request: DLRequest):
   obj_string = re.search(r'<div data-hero="(.+?)"', page_content).group(1)
   obj_string = re.sub(r'&quot;', '"', obj_string)
   obj = json.loads(obj_string)
-  for playlist in obj['data']['playlists']:
-    for episode in playlist['episodes']:
-      if episode['pageInfo']['url'] == dl_request.video_page_or_manifest_url.split('#')[0]:
-        video_uuid = episode['videoUuid']
-        type_form = episode['type']
-        type_form = re.sub('_', '-', type_form)
-        is_drm = episode['isDrm']
-        if dl_request.output_filename is None:
-          title = episode['pageInfo']['title']
-          title = parse_filename(title)
-        else:
-          title = dl_request.output_filename
-        break
+
+  video_object = None
+  if len(obj['data']['playlists']) == 0:
+    # This is a movie
+    video_object = obj['data']['movie']
+  else:
+    # This is a series
+    for playlist in obj['data']['playlists']:
+      for episode in playlist['episodes']:
+        if episode['pageInfo']['url'] == dl_request.video_page_or_manifest_url.split('#')[0]:
+          video_object = episode
+          break
+
+  video_uuid = video_object['videoUuid']
+  type_form = video_object['type']
+  type_form = re.sub('_', '-', type_form)
+  is_drm = video_object['isDrm']
+  if dl_request.output_filename is None:
+    title = video_object['pageInfo']['title']
+    title = parse_filename(title)
+  else:
+    title = dl_request.output_filename
+
   logger.debug(f'Video uuid: {video_uuid}')
   logger.debug(f'Type: {type_form}')
   logger.debug(f'Is DRM: {is_drm}')
