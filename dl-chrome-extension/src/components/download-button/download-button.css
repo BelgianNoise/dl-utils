@@ -1,4 +1,4 @@
-button {
+button#dl-utils-download-button {
   background: none;
   margin: 0;
 
@@ -16,6 +16,6 @@ button {
   gap: 10px;
 }
 
-button:hover {
+button#dl-utils-download-button:hover {
   background-color: #FFFFFF11;
 }

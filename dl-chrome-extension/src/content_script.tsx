@@ -1,14 +1,15 @@
 import { createRoot } from "react-dom/client";
 import React from "react";
 import DownloadButton from "./components/download-button/download-button";
-import { Message, MessageType, URLUpdatedMessage } from "./types";
+import { MessageType } from "./types";
 
 console.log('RUNNING CONTENT SCRIPT')
 
 export const buttonElementId = "dl-utils-download-button";
 export const notificationContainerElementId = "dl-utils-notification-container";
 
-function addButton(): void {
+function addButtonVRTMAX(): void {
+  console.log('adding button to VRT MAX')
   if (document.getElementById(buttonElementId)) return;
   const el = document.querySelector('sso-login');
   if (!el) return;
@@ -21,34 +22,74 @@ function addButton(): void {
       <DownloadButton />
     </React.StrictMode>
   );
+  console.log('added button to VRT MAX')
 }
 
-function showButton(): void {
+function addButtonGoPlaySeries(): void {
+  console.log('adding button to GoPlay')
+  if (document.getElementById(buttonElementId)) return;
+  const el = document.querySelector('div.sbs-video__info');
+  if (!el) return;
+  (el as HTMLDivElement).style.position = 'relative';
+  const newDiv = document.createElement("div");
+  newDiv.id = buttonElementId;
+  newDiv.style.position = 'absolute';
+  newDiv.style.right = '20px';
+  newDiv.style.top = '10px';
+  el.append(newDiv);
+  const root = createRoot(newDiv);
+  root.render(
+    <React.StrictMode>
+      <DownloadButton />
+    </React.StrictMode>
+  );
+  console.log('added button to GoPlay')
+}
+
+function addButtonGoPlayMovie(): void {
+  console.log('adding button to GoPlay')
+  if (document.getElementById(buttonElementId)) return;
+  const el = document.querySelector('main.l-content > article');
+  if (!el) return;
+  (el as HTMLDivElement).style.position = 'relative';
+  const newDiv = document.createElement("div");
+  newDiv.id = buttonElementId;
+  newDiv.style.position = 'absolute';
+  newDiv.style.left = '50%';
+  newDiv.style.top = '0';
+  newDiv.style.transform = 'translateX(-50%) translateY(-50%)';
+  el.append(newDiv);
+  const root = createRoot(newDiv);
+  root.render(
+    <React.StrictMode>
+      <DownloadButton />
+    </React.StrictMode>
+  );
+  console.log('added button to GoPlay')
+}
+
+function removeButton(): void {
   const el = document.getElementById(buttonElementId);
   if (el) {
-    el.style.display = "block";
+    el.remove();
   }
 }
 
-function hideButton(): void {
-  const el = document.getElementById(buttonElementId);
-  if (el) {
-    el.style.display = "none";
-  }
-}
-
-function shouldIStayOrShouldIGo(
-  url: string,
-) {
-  if (url.match(/\/a-z\/([\w-]*?)\/([\w-]*?)\/([\w-]*?)\/?$/)) {
-    showButton();
+function handleURLUpdated() {
+  const url = window.location.href;
+  console.log('URL updated:', url);
+  if (url.match(/\/a-z\/([\w-]+?)\/([\w-]+?)\/([\w-]+?)\/?$/)) {
+    // VRT MAX
+    addButtonVRTMAX();
+  } else if (url.match(/\/video\/[\w-]+?\/[\w-]+?\/[\w-]+?(#autoplay)?$/)) {
+    // GOPLAY SERIES
+    addButtonGoPlaySeries();
+  } else if (url.match(/\/video\/([\w-]+?\/[\w-]+?\/)?[\w-]+?(#autoplay)?$/)) {
+    // GOPLAY MOVIE
+    addButtonGoPlayMovie();
   } else {
-    hideButton();
+    removeButton();
   }
-}
-
-function handleURLUpdatedMessage(message: URLUpdatedMessage) {
-  shouldIStayOrShouldIGo(message.url);
 }
 
 function addNotificationContainer(): void {
@@ -60,18 +101,19 @@ function addNotificationContainer(): void {
   html.append(newDiv);
 }
 
-addButton();
-console.log('added button to the page')
+
 addNotificationContainer();
 console.log('added notification container to the page')
-shouldIStayOrShouldIGo(window.location.href);
-
+// Fake a URL update at init
+handleURLUpdated();
+console.log('handled URL update at init')
 
 chrome.runtime.onMessage.addListener(
-  (message: Message, sender, sendResponse) => {
-    if (message && message.type){ // this kinda checks if the typing is correct
-      if (message.type === MessageType.URL_UPDATED) {
-        handleURLUpdatedMessage(message as URLUpdatedMessage)
-      }
+  (message, sender, sendResponse) => {
+    console.log('message', message)
+    if (message === MessageType.URL_UPDATED) {
+      handleURLUpdated()
     }
 });
+
+console.log('CONTENT SCRIPT LOADED')

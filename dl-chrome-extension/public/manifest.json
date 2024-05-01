@@ -18,7 +18,8 @@
   "content_scripts": [
     {
       "matches": [
-        "*://*.vrt.be/vrtmax/*"
+        "*://*.vrt.be/vrtmax/*",
+        "*://*.goplay.be/*"
       ],
       "js": ["js/vendor.js", "js/content_script.js"],
       "css": ["css/variables.css","css/notifications.css"]
@@ -35,6 +36,7 @@
   ],
 
   "host_permissions": [
-    "*://*.vrt.be/*"
+    "*://*.vrt.be/*",
+    "*://*.goplay.be/*"
   ]
 }

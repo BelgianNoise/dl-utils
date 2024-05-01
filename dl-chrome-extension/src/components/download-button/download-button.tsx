@@ -5,7 +5,7 @@ import { download } from "./download";
 
 const DownloadButton = () => {
   return (
-    <button onClick={download}>
+    <button id="dl-utils-download-button" onClick={download}>
       <SVGDownload />
       <span>Download</span>
     </button>
