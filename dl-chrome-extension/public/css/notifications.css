@@ -1,0 +1,14 @@
+#dl-utils-notification-container {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  margin: 0 10px 10px 0;
+
+  width: 400px;
+  max-width: 400px;
+}

@@ -1,4 +1,4 @@
-input {
+input, select {
   width: 100%;
   padding: var(--gap-small) var(--gap-normal);
   margin: 0;
@@ -10,8 +10,10 @@ input {
   border: 1px solid var(--color-foreground-normal);
 }
 
-input:focus {
+input:focus, select:focus {
   outline: none;
+}
+input:focus {
   background: var(--color-foreground-normal);
   color: var(--color-background-normal);
 }
@@ -25,8 +27,4 @@ input:focus {
 .input-container label {
   padding-left: var(--gap-small);
   font-size: 0.8rem;
-}
-
-select:focus {
-  outline: none;
 }

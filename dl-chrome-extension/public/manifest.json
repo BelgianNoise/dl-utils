@@ -20,7 +20,8 @@
       "matches": [
         "*://*.vrt.be/vrtmax/*"
       ],
-      "js": ["js/vendor.js", "js/content_script.js"]
+      "js": ["js/vendor.js", "js/content_script.js"],
+      "css": ["css/variables.css","css/notifications.css"]
     }
   ],
 

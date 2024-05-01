@@ -1,0 +1,15 @@
+import React from "react";
+import "./download-button.css";
+import SVGDownload from "../../svg/svg-download";
+import { download } from "./download";
+
+const DownloadButton = () => {
+  return (
+    <button onClick={download}>
+      <SVGDownload />
+      <span>Download</span>
+    </button>
+  );
+};
+
+export default DownloadButton;

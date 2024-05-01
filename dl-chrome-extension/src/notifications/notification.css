@@ -1,0 +1,25 @@
+.notification {
+  width: 100%;
+  padding: var(--gap-normal);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: start;
+  gap: var(--gap-normal);
+  border-radius: var(--gap-small);
+
+  background: var(--color-background-light);
+  color: var(--color-foreground-normal);
+}
+.notification.info {
+  background: var(--color-info-light);
+  color: var(--color-info-dark);
+}
+.notification.success {
+  background: var(--color-success-light);
+  color: var(--color-success-dark);
+}
+.notification.error {
+  background: var(--color-error-light);
+  color: var(--color-error-dark);
+}

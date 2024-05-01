@@ -1,0 +1,24 @@
+html {
+  --color-background-dark: #121212;
+  --color-background-light: #303030;
+  --color-background-normal: #1c1c1c;
+
+  --color-foreground-normal: #f5f5f5;
+  --color-foreground-dark: #e2e2e2;
+  --color-foreground-darker: #a9a9a9;
+
+  --color-info-light: #bce0ff;
+  --color-info-dark: #03559d;
+
+  --color-success-light: #cbffcd;
+  --color-success-dark: #2e7d32;
+
+  --color-error-light: #ffbebe;
+  --color-error-dark: #9a0007;
+
+  --gap-tiny: 5px;
+  --gap-small: 10px;
+  --gap-normal: 20px;
+  --gap-large: 40px;
+  --gap-huge: 80px;
+}
