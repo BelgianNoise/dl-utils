@@ -3,7 +3,6 @@ import subprocess
 from loguru import logger
 
 from ..models.dl_request_platform import DLRequestPlatform
-from .binaries import get_path_to_binary
 
 def download_video_nre(
   mpd_url: str,
@@ -21,7 +20,7 @@ def download_video_nre(
 
   :return: Path to downloaded file
   '''
-  command = [get_path_to_binary('n-m3u8dl-re')]
+  command = ['n-m3u8dl-re']
   for kid, key in keys.items():
     command.append('--key')
     command.append(f'{kid}:{key}')
