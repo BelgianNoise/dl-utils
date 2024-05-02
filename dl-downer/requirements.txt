@@ -2,6 +2,6 @@ loguru
 requests
 protobuf>=4.25.1
 pywidevine==1.8.0
-playwright
+playwright==1.42.0
 python-dotenv
 psycopg2-binary

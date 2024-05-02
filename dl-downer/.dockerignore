@@ -1,0 +1,6 @@
+.env
+downloads/*
+storage_states/*
+cdm/*
+binaries/windows/*
+**/_pycache_/*
