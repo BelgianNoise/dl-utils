@@ -7,6 +7,11 @@ export function download() {
     const quality = data.quality;
 
     const fetchUrl = new URL('/queue/add', url);
+    console.log('Sending download request', {
+      url: fetchUrl.toString(),
+      token: token,
+      quality: quality,
+    });
 
     fetch(
       fetchUrl.toString(),
@@ -31,6 +36,11 @@ export function download() {
         addNotification({
           level: NotificationLevel.INFO,
           message: `Download already in the queue`,
+        });
+      } else if (response.status === 401) {
+        addNotification({
+          level: NotificationLevel.ERROR,
+          message: `Failed to add download to the queue (unauthorized)`,
         });
       } else {
         addNotification({

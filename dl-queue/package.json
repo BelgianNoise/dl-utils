@@ -39,9 +39,6 @@
     "express-async-handler": "^1.2.0",
     "pg": "^8.11.5",
     "pino": "^8.20.0",
-    "pino-pretty": "^11.0.0",
-    "puppeteer": "^22.6.2",
-    "puppeteer-extra": "^3.3.6",
-    "puppeteer-extra-plugin-stealth": "^2.11.2"
+    "pino-pretty": "^11.0.0"
   }
 }

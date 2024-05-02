@@ -1,4 +1,3 @@
-import fs from 'fs';
 import express from 'express';
 import { config } from 'dotenv';
 import bodyParser from 'body-parser';
@@ -21,18 +20,12 @@ const requiredEnvVars: string[] = [
   'POSTGRES_HOST',
   'POSTGRES_PORT',
   'POSTGRES_DATABASE',
+  'AUTH_SECRET',
 ];
 requiredEnvVars.forEach((envVar) => {
   if (!process.env[envVar]) {
     logger.error(`Missing required environment variable: ${envVar}`);
     process.exit(1);
-  }
-});
-// Make sure all required folder paths exist
-const requiredPaths: string[] = [];
-requiredPaths.forEach((path) => {
-  if (!fs.existsSync(path)) {
-    fs.mkdirSync(path);
   }
 });
 
@@ -48,16 +41,34 @@ const app = express();
 app.use(bodyParser.json());
 const port = process.env.PORT || 3000;
 
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    allowAllCORS(req, res);
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
+
+// Authentication middleware
+app.use((req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    logger.warn('Missing Authorization header');
+    res.sendStatus(401);
+  } else if (authHeader !== process.env.AUTH_SECRET) {
+    logger.warn('Invalid Authorization header');
+    res.sendStatus(401);
+  } else {
+    next();
+  }
+});
+
 app.get('/queue', (req, res) => {
   logger.info('GET /queue');
   void getQueueHandler(req, res);
 });
 
-app.options('/queue/add', (req, res) => {
-  logger.info('OPTIONS /queue/add');
-  allowAllCORS(req, res);
-  res.sendStatus(200);
-});
 app.post('/queue/add', expressAsyncHandler( async(req, res) => {
   logger.info('POST /queue/add');
   await postQueueAddHandler(req, res, logger);
