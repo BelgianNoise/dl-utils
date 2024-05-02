@@ -4,14 +4,17 @@ This project aims to aid me in downloading videos from certain content providers
 The downloaded files are strictly for personal use only without any intend to break user agreements.
 The focus lies not on illegally acquiring or consuming video content, content is only to be consumed in accordance to the platform's terms of service.
 
-This project consists of 4 subprojects that can mostly be used on their own, this is done to reduce debugging complexity and maximize availability.
+This project consists of 3 subprojects that can mostly be used on their own, this is done to reduce debugging complexity and maximize availability.
 
 Currently supported content providers:
-- [x] VRT MAX         (dl-downer, dl-queue, dl-chrome-extension)
-- [x] GoPlay          (dl-downer, dl-queue)
-- [ ] VTM GO
-- [ ] Streamz
-- [ ] NPO Start
+
+| Content Provider | dl-downer | dl-queue | dl-chrome-extension |
+|------------------|-----------|----------|---------------------|
+| VRT MAX          |    ✔️     |    ✔️    |         ✔️           |
+| GoPlay           |    ✔️     |    ✔️    |         ✔️           |
+| VTM GO           |    ❌     |    ❌    |         ❌           |
+| Streamz          |    ❌     |    ❌    |         ❌           |
+| NPO Start        |    ❌     |    ❌    |         ❌           |
 
 ## [dl-downer](dl-downer/)
 
@@ -20,7 +23,7 @@ Python script that monitors a database table for new download requests, if a new
 ## [dl-queue](dl-queue/)
 
 Express.js server exposing 2 endpoints:
-1. `POST /queue/add` - to add download requests to the queue (authenticated)
+1. `POST /queue/add` - to add download requests to the queue
 2. `GET /queue` - get json representation of the current download queue
 
 This service acts as a middleman between the chrome extension and the downloader, it stores download requests in a PostgreSQL database for the downloader to pick up.
