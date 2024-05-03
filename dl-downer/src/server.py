@@ -45,22 +45,26 @@ def start_server():
       dl_request = DLRequest.from_db_row(pending_request)
       dl_request.update_status(DLRequestStatus.IN_PROGRESS, db)
       logger.info(f'Downloading {dl_request.video_page_or_manifest_url} from {dl_request.platform} ...')
+      start_time = time.time()
 
       try:
         if dl_request.platform == DLRequestPlatform.VRTMAX.value:
           from .downloaders.VRTMAX import VRTMAX_DL
           VRTMAX_DL(dl_request)
-
         elif dl_request.platform == DLRequestPlatform.GOPLAY.value:
           from .downloaders.GOPLAY import GOPLAY_DL
           GOPLAY_DL(dl_request)
+        elif dl_request.platform == DLRequestPlatform.GENERIC_MANIFEST.value:
+          from .downloaders.GENERIC_MANIFEST import GENERIC_MANIFEST_DL
+          GENERIC_MANIFEST_DL(dl_request)
         else:
           logger.error(f'Unsupported platform: {dl_request.platform}')
           # throw error for now
           raise Exception('Unsupported platform')
       
         dl_request.update_status(DLRequestStatus.COMPLETED, db)
-        logger.info(f'Downloaded {dl_request.video_page_or_manifest_url} from {dl_request.platform} successfully!')
+        duration = time.time() - start_time
+        logger.info(f'({duration:.2f}) Downloaded {dl_request.video_page_or_manifest_url} from {dl_request.platform} successfully!')
 
       except Exception as e:
         dl_request.update_status(DLRequestStatus.FAILED, db)
