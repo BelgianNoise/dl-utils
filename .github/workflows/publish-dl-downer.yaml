@@ -41,5 +41,5 @@ jobs:
           context: ./dl-downer/
           push: true
           tags: |
-            ghcr.io/${{ steps.repoowner.outputs.lowercase }}/dl-downer:${{ github.sha }}
-            ghcr.io/${{ steps.repoowner.outputs.lowercase }}/dl-downer:latest
+            ghcr.io/${{ steps.repoowner.outputs.lowercase }}/${{ github.repository }}/dl-downer:${{ github.sha }}
+            ghcr.io/${{ steps.repoowner.outputs.lowercase }}/${{ github.repository }}/dl-downer:latest
