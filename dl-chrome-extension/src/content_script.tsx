@@ -68,6 +68,29 @@ function addButtonGoPlayMovie(): void {
   console.log('added button to GoPlay')
 }
 
+function addButtonYouTube(): void {
+  console.log('adding button to YouTube')
+  if (document.getElementById(buttonElementId)) return;
+  const el: HTMLDivElement = document.querySelector(
+    'div#above-the-fold div#title',
+  ) as HTMLDivElement;
+  if (!el) return;
+  const newDiv = document.createElement("div");
+  newDiv.id = buttonElementId;
+  el.style.display = 'flex';
+  el.style.justifyContent = 'space-between';
+  el.style.alignItems = 'center';
+  el.style.gap = '20px';
+  el.append(newDiv);
+  const root = createRoot(newDiv);
+  root.render(
+    <React.StrictMode>
+      <DownloadButton />
+    </React.StrictMode>
+  );
+  console.log('added button to YouTube')
+}
+
 function removeButton(): void {
   const el = document.getElementById(buttonElementId);
   if (el) {
@@ -87,6 +110,9 @@ function handleURLUpdated() {
   } else if (url.match(/\/video\/([\w-]+?\/[\w-]+?\/)?[\w-]+?(#autoplay)?$/)) {
     // GOPLAY MOVIE
     addButtonGoPlayMovie();
+  } else if (url.match(/youtube\.com\/watch/)) {
+    // YOUTUBE
+    addButtonYouTube();
   } else {
     removeButton();
   }

@@ -14,9 +14,9 @@ Currently supported content providers:
 | GoPlay               |    ✔️     |    ✔️   |         ✔️          |
 | VTM GO               |    ❌     |    ❌   |         ❌          |
 | Streamz              |    ❌     |    ❌   |         ❌          |
-| YouTube              |    ✔️     |    ✔️   |         ❌          |
-| Plain manifest url   |    ✔️     |    ✔️   |                      |
-| NPO Start            |    ❌     |    ❌   |         ❌           |
+| YouTube              |    ✔️     |    ✔️   |         ✔️          |
+| Plain manifest url   |    ✔️     |    ✔️   |         ❌          |
+| NPO Start            |    ❌     |    ❌   |         ❌          |
 
 ## [dl-downer](dl-downer/)
 
