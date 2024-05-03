@@ -9,12 +9,14 @@ This project consists of 3 subprojects that can mostly be used on their own, thi
 Currently supported content providers:
 
 | Content Provider | dl-downer | dl-queue | dl-chrome-extension |
-|------------------|-----------|----------|---------------------|
-| VRT MAX          |    ✔️     |    ✔️    |         ✔️           |
-| GoPlay           |    ✔️     |    ✔️    |         ✔️           |
-| VTM GO           |    ❌     |    ❌    |         ❌           |
-| Streamz          |    ❌     |    ❌    |         ❌           |
-| NPO Start        |    ❌     |    ❌    |         ❌           |
+|----------------------|-----------|----------|---------------------|
+| VRT MAX              |    ✔️     |    ✔️   |         ✔️          |
+| GoPlay               |    ✔️     |    ✔️   |         ✔️          |
+| VTM GO               |    ❌     |    ❌   |         ❌          |
+| Streamz              |    ❌     |    ❌   |         ❌          |
+| YouTube              |    ✔️     |    ✔️   |         ❌          |
+| Plain manifest url   |    ✔️     |    ✔️   |                      |
+| NPO Start            |    ❌     |    ❌   |         ❌           |
 
 ## [dl-downer](dl-downer/)
 
