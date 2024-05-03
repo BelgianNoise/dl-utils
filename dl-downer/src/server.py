@@ -57,6 +57,9 @@ def start_server():
         elif dl_request.platform == DLRequestPlatform.GENERIC_MANIFEST.value:
           from .downloaders.GENERIC_MANIFEST import GENERIC_MANIFEST_DL
           GENERIC_MANIFEST_DL(dl_request)
+        elif dl_request.platform == DLRequestPlatform.YOUTUBE.value:
+          from .downloaders.YOUTUBE import YOUTUBE_DL
+          YOUTUBE_DL(dl_request)
         else:
           logger.error(f'Unsupported platform: {dl_request.platform}')
           # throw error for now

@@ -5,3 +5,4 @@ pywidevine==1.8.0
 playwright==1.42.0
 python-dotenv
 psycopg2-binary
+yt-dlp
