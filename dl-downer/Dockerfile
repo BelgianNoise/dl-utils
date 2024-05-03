@@ -1,6 +1,8 @@
 # Use an official Python runtime as the base image
 FROM python:3.12
 
+LABEL org.opencontainers.image.source https://github.com/belgiannoise/dl-utils
+
 VOLUME /downloads
 VOLUME /storage_states
 VOLUME /cdm
