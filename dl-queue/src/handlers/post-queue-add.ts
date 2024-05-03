@@ -66,6 +66,10 @@ export async function postQueueAddHandler(
     downloadRequest.platform = DLRequestPlatform.VTMGO;
   } else if (url.startsWith('https://www.goplay.be/')) {
     downloadRequest.platform = DLRequestPlatform.GOPLAY;
+  } else if (url.startsWith('https://www.youtube.com/')) {
+    downloadRequest.platform = DLRequestPlatform.YOUTUBE;
+  } else if (url.includes('.m3u8') || url.includes('.mpd')) {
+    downloadRequest.platform = DLRequestPlatform.GENERIC_MANIFEST;
   }
 
   // Write new download request to the database
