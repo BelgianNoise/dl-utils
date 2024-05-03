@@ -31,9 +31,10 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GHCR_TOKEN }}
 
-      - name: Convert repository owner to lowercase
-        id: repoowner
-        run: echo "::set-output name=lowercase::$(echo ${{ github.repository_owner }} | awk '{print tolower($0)}')"
+      - name: Convert repository to lowercase
+        id: repo
+        # github.repository is in the format "owner/repo"
+        run: echo "::set-output name=lowercase::$(echo ${{ github.repository }} | awk '{print tolower($0)}')"
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v2.7.0
@@ -41,5 +42,5 @@ jobs:
           context: ./dl-downer/
           push: true
           tags: |
-            ghcr.io/${{ steps.repoowner.outputs.lowercase }}/${{ github.repository }}/dl-downer:${{ github.sha }}
-            ghcr.io/${{ steps.repoowner.outputs.lowercase }}/${{ github.repository }}/dl-downer:latest
+            ghcr.io/${{ steps.repo.outputs.lowercase }}/dl-downer:${{ github.sha }}
+            ghcr.io/${{ steps.repo.outputs.lowercase }}/dl-downer:latest
