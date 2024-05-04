@@ -1,6 +1,15 @@
 import { NotificationLevel, addNotification } from "../../notifications/notifications";
 
-export function download() {
+export function downloadCurrentPage() {
+  download({ url: window.location.href });
+}
+
+export function download(options?: {
+  url?: string;
+  filename?: string;
+  quality?: string;
+  notify?: boolean;
+}) {
   chrome.storage.sync.get(['token', 'url', 'quality'], (data) => {
     const token = data.token;
     const url = data.url;
@@ -22,11 +31,13 @@ export function download() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          url: window.location.href,
-          preferredQualityMatcher: quality,
+          url: options?.url || window.location.href,
+          preferredQualityMatcher: options?.quality || quality,
+          ... (options?.filename) && { outputFilename: options.filename },
         }),
       }
     ).then((response: Response) => {
+      if (options?.notify === false) return;
       if (response.status === 201) {
         addNotification({
           level: NotificationLevel.SUCCESS,

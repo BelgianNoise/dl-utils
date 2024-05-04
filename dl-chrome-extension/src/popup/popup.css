@@ -29,6 +29,21 @@
   background-color: var(--color-background-light);
 }
 
+.header .buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: end;
+  align-items: center;
+  gap: var(--gap-small);
+}
+
+.header #add-manual-manifest-button {
+  border: none;
+  padding: var(--gap-small);
+  transform: rotate(45deg);
+  border-radius: 50%;
+}
+
 h1, h2, h3, h4, h5, h6 {
   margin: 0;
   padding: 0;
