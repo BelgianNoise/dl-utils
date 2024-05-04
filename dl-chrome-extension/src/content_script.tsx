@@ -28,15 +28,11 @@ function addButtonVRTMAX(): void {
 function addButtonGoPlaySeries(): void {
   console.log('adding button to GoPlay')
   if (document.getElementById(buttonElementId)) return;
-  const el = document.querySelector('div.sbs-video__info');
+  const el = document.querySelector('div.sbs-video__info h1.sbs-video__title');
   if (!el) return;
-  (el as HTMLDivElement).style.position = 'relative';
   const newDiv = document.createElement("div");
   newDiv.id = buttonElementId;
-  newDiv.style.position = 'absolute';
-  newDiv.style.right = '20px';
-  newDiv.style.top = '10px';
-  el.append(newDiv);
+  el.parentNode!.insertBefore(newDiv, el);
   const root = createRoot(newDiv);
   root.render(
     <React.StrictMode>
