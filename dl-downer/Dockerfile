@@ -11,7 +11,6 @@ ENV DOWNLOADS_FOLDER=/downloads
 ENV STORAGE_STATES_FOLDER=/storage_states
 ENV CDM_FILE_PATH=/cdm/cdm.wvd
 
-ENV PORT=8080
 ENV HEADLESS=true
 ENV POSTGRES_USERNAME=
 ENV POSTGRES_PASSWORD=
@@ -39,7 +38,5 @@ RUN apt-get install -y ffmpeg mkvtoolnix
 RUN pip install --no-cache-dir -r requirements.txt
 # RUN pip install playwright==@1.42.0
 RUN playwright install --with-deps
-
-EXPOSE 8080
 
 CMD [ "python", "start.py" ]
