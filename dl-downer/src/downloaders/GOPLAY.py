@@ -171,6 +171,8 @@ def GOPLAY_DL(dl_request: DLRequest):
   final_file = mpd.download('./tmp', download_options)
   # move the final file to the downloads folder
   final_file_move_to = dl_request.get_full_filename_path(title)
-  os.makedirs(os.path.dirname(final_file_move_to), exist_ok=True)
-  os.rename(final_file, final_file_move_to)
+  # We can't use shutil.move or os.rename because the destination
+  # might be on a different filesystem depending on the configuration
+  shutil.copy(final_file, final_file_move_to)
+  os.remove(final_file)
   logger.debug(f'Downloaded {title} to {final_file_move_to}')
