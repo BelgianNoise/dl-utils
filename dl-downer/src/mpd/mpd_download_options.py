@@ -1,3 +1,4 @@
+from typing import List
 
 class MPDDownloadOptions():
   '''
@@ -23,6 +24,9 @@ class MPDDownloadOptions():
       A dictionary containing the keys to decrypt the files.
       The keys are in the format: {key_id: key_value}.
       Example: {'08': '1234567890ABCDEF1234567890ABCDEF'}
+    ignore_periods (List[str]):
+      A list of periods to ignored, as a regex pattern.
+      Example: [ '^pre-roll.*' ]
   '''
   def __init__(
     self,
@@ -30,11 +34,13 @@ class MPDDownloadOptions():
     audio_language: str = 'all',
     subtitle_language: str = 'all',
     decrypt_keys: dict[str, str] = {},
+    ignore_periods: List[str] = [],
   ):
     self.video_resolution = video_resolution
     self.audio_language = audio_language
     self.subtitle_language = subtitle_language
     self.decrypt_keys = decrypt_keys
+    self.ignore_periods = ignore_periods
   def __str__(self):
     return f'<MPDDownloadOptions(video_resolution={self.video_resolution}, audio_language={self.audio_language}, subtitle_language={self.subtitle_language})>'
   def __repr__(self):

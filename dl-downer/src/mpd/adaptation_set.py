@@ -59,7 +59,7 @@ class AdaptationSet:
     self.representations = representations
     self.has_content_protections = has_content_protections
   def __str__(self):
-    return f'<AdaptationSet(id={self.id}, mime_type={self.mime_type})>'
+    return f'<AdaptationSet(id={self.id}, mime_type={self.mime_type}, content_type={self.content_type})>'
   def __repr__(self):
     return self.__str__()
   @staticmethod

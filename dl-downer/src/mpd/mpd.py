@@ -82,10 +82,25 @@ class MPD:
     os.makedirs(my_tmp_dir, exist_ok=True)
     # download all periods
     files_to_concat = []
+
     for period in self.periods:
+
+      ignore_period = False
+      if download_options is not None:
+        for ignore_period_regex in download_options.ignore_periods:
+          if re.match(ignore_period_regex, period.id):
+            ignore_period = True
+            break
+
+      if ignore_period is True:
+        logger.debug(f'Ignoring period {period.id}')
+        continue
+
       period_file = period.download(my_tmp_dir, self.base_url, download_options)
       files_to_concat.append(period_file)
 
+    if len(files_to_concat) == 0:
+      raise Exception(f'No periods were downloaded {self.periods}')
     # some manifests will have multiple periods, in that case we need to concat them
     created_file = files_to_concat[0]
     # concat all files
