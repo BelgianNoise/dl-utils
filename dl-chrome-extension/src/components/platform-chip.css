@@ -1,0 +1,26 @@
+.platform-chip {
+  font-size: 0.8rem;
+  line-height: 0.8rem;
+  display: inline-block;
+  padding: var(--gap-tiny) 0 !important;
+  margin-left: var(--gap-tiny);
+  border-radius: calc(0.4rem + var(--gap-tiny));
+
+  background-color: black;
+  color: white;
+}
+.platform-chip.VRTMAX {
+  background-color: #FF5053;
+}
+.platform-chip.GOPLAY {
+  background-color: #F50A00;
+}
+.platform-chip.VTMGO {
+  background-color: #FF00FF;
+}
+.platform-chip.STREAMZ {
+  background-color: #020012;
+}
+.platform-chip.YOUTUBE {
+  background-color: #FF0000;
+}

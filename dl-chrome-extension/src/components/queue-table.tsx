@@ -1,5 +1,6 @@
 import React from "react";
 import { DLRequest } from "../models/dl-request";
+import PlatformChip from "./platform-chip";
 
 const QueueList = (props: {
   requests: DLRequest[];
@@ -16,7 +17,7 @@ const QueueList = (props: {
       {props.requests.map((request) => {
         return (
           <div key={request.id} className="queue-list-item">
-            <span>{request.platform}</span>
+            <PlatformChip platform={request.platform} />
             <a
               href={request.videoPageOrManifestUrl}
               title={request.videoPageOrManifestUrl}

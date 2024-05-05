@@ -73,6 +73,7 @@
   display: grid;
   gap: var(--gap-small);
   grid-template-columns: 15fr 61fr 12fr 12fr;
+  align-items: center;
 }
 
 .queue-list-item span, .queue-list-item a {
