@@ -9,6 +9,7 @@ import "../css/input.css";
 import SettingsDialog from "../components/settings";
 import SVGCross from "../svg/svg-cross";
 import ManualAddDialog from "../components/manual-add";
+import Queue from "../components/queue";
 
 const Popup = () => {
 
@@ -35,6 +36,8 @@ const Popup = () => {
           </button>
         </div>
       </div>
+
+      <Queue />
 
       <SettingsDialog
         open={showSettings}

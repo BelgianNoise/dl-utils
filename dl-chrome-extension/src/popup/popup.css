@@ -10,13 +10,21 @@
 
 #root * {
   transition: all 0.2s;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+body::-webkit-scrollbar {
+  display: none;
 }
 
 .container {
   display: flex;
   flex-direction: column;
   height: 100%;
+  max-height: 100%;
   width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .header {
@@ -48,4 +56,15 @@ h1, h2, h3, h4, h5, h6 {
   margin: 0;
   padding: 0;
   cursor: default;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+a:hover {
+  text-decoration: underline;
+}
+a:visited {
+  color: inherit;
 }

@@ -1,0 +1,89 @@
+.queue-container {
+  max-height: 100%;
+  overflow: auto;
+  padding: var(--gap-normal);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-normal);
+  align-items: center;
+}
+
+.table-container {
+  max-width: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-small);
+}
+.table-container h2.chip {
+  font-size: 1rem;
+  line-height: 1rem;
+  padding: var(--gap-small) var(--gap-normal);
+  border-radius: calc(0.5rem + var(--gap-small));
+
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+.table-container:has(.queue-list-container) {
+  border-top-left-radius: calc(0.5rem + var(--gap-small));
+  border-top-right-radius: calc(0.5rem + var(--gap-small));
+  border-bottom-left-radius: var(--gap-small);
+  border-bottom-right-radius: var(--gap-small);
+  border: 1px solid transparent;
+}
+.table-container:has(h2.chip.completed) {
+  border-color: var(--color-success-dark);
+}
+.table-container:has(h2.chip.failed) {
+  border-color: var(--color-error-dark);
+}
+.table-container:has(h2.chip.pending) {
+  border-color: var(--color-info-dark);
+}
+.table-container:has(h2.chip.in-progress) {
+  border-color: #d0db00;
+}
+.chip.completed {
+  background-color: var(--color-success-dark);
+}
+.chip.failed {
+  background-color: var(--color-error-dark);
+}
+.chip.pending {
+  background-color: var(--color-info-dark);
+}
+.chip.in-progress {
+  background-color: #d0db00;
+}
+
+.queue-list-container {
+  border-radius: var(--gap-small);
+  overflow: hidden;
+}
+.queue-list-item:nth-child(odd) {
+  background-color: var(--color-background-light);
+}
+
+.queue-list-container .queue-list-item {
+  max-width: 100%;
+  
+  display: grid;
+  gap: var(--gap-small);
+  grid-template-columns: 15fr 61fr 12fr 12fr;
+}
+
+.queue-list-item span, .queue-list-item a {
+  padding: var(--gap-small) 0;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+}
+
+.queue-list-item.head {
+  font-weight: bold;
+}
