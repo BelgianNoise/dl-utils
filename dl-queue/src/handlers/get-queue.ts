@@ -3,7 +3,6 @@ import { getPool } from '../utils/database';
 
 export interface GetQueueRequestBody {
   list: string[] | undefined;
-  count: string[] | undefined;
 }
 
 export async function getQueueHandler(
@@ -22,32 +21,29 @@ export async function getQueueHandler(
     res.status(400).json({ error: 'Invalid body' });
     return;
   }
-  if (body.count && !Array.isArray(body.count)) {
-    res.status(400).json({ error: 'Invalid body' });
-    return;
-  }
 
   let result: Record<string, unknown> = {};
 
-  for (const key of new Set([ ...(body.list || []), ...(body.count || []) ])) {
+  for (const key of new Set([ ...(body.list || []) ])) {
     const res = await getPool().query(`
       SELECT
         id,
         status,
         platform,
-        video_page_or_manifest_url,
+        video_page_or_manifest_url AS "videoPageOrManifestUrl",
         created,
         updated,
-        output_filename,
-        preferred_quality_matcher
+        output_filename AS "outputFilename",
+        preferred_quality_matcher AS "preferredQualityMatcher"
       FROM dl.dl_request
       WHERE status = $1
+      ORDER BY updated DESC
+      LIMIT 100
     `, [key]);
 
     result = {
       ...result,
-      ... (body.list?.includes(key)) && { [key]: res.rows },
-      ... (body.count?.includes(key)) && { [`${key}_COUNT`]: res.rowCount },
+      [key]: res.rows,
     };
   }
 

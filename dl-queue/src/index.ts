@@ -42,8 +42,8 @@ app.use(bodyParser.json());
 const port = process.env.PORT || 3000;
 
 app.use((req, res, next) => {
+  allowAllCORS(req, res);
   if (req.method === 'OPTIONS') {
-    allowAllCORS(req, res);
     res.sendStatus(200);
   } else {
     next();
@@ -64,8 +64,8 @@ app.use((req, res, next) => {
   }
 });
 
-app.get('/queue', (req, res) => {
-  logger.info('GET /queue');
+app.post('/queue', (req, res) => {
+  logger.info('POST /queue');
   void getQueueHandler(req, res);
 });
 
