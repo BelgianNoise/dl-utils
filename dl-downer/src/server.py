@@ -1,3 +1,4 @@
+import traceback
 from loguru import logger
 import time
 
@@ -67,12 +68,13 @@ def start_server():
       
         dl_request.update_status(DLRequestStatus.COMPLETED, db)
         duration = time.time() - start_time
-        logger.info(f'({duration:.2f}) Downloaded {dl_request.video_page_or_manifest_url} from {dl_request.platform} successfully!')
+        logger.info(f'({duration:.2f}s) Downloaded {dl_request.video_page_or_manifest_url} from {dl_request.platform} successfully!')
 
       except Exception as e:
         dl_request.update_status(DLRequestStatus.FAILED, db)
-        logger.error('An error occurred')
-        logger.error(e)
+        # log error and its stacktrace
+        logger.error(f'An error occurred: {e}')
+        logger.error(traceback.format_exc())
 
 
     else:
