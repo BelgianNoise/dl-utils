@@ -15,7 +15,7 @@ Currently supported content providers:
 | VTM GO               |    ❌     |    ❌   |         ❌          |
 | Streamz              |    ❌     |    ❌   |         ❌          |
 | YouTube              |    ✔️     |    ✔️   |         ✔️          |
-| Plain manifest url   |    ✔️     |    ✔️   |         ❌          |
+| Plain manifest url   |    ✔️     |    ✔️   |         ✔️          |
 | NPO Start            |    ❌     |    ❌   |         ❌          |
 
 ## [dl-downer](dl-downer/)
