@@ -23,6 +23,9 @@ ENV AUTH_VRTMAX_PASSWORD=
 ENV AUTH_GOPLAY_EMAIL=
 ENV AUTH_GOPLAY_PASSWORD=
 
+ENV PUID=6969
+ENV PGID=6969
+
 COPY . .
 
 # Make all binaries executable
@@ -39,4 +42,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 # RUN pip install playwright==@1.42.0
 RUN playwright install --with-deps
 
-CMD [ "python", "start.py" ]
+CMD [ "entry.sh" ]
