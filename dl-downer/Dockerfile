@@ -45,7 +45,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # RUN pip install playwright==@1.42.0
 RUN playwright install --with-deps
 
-# install gosu
+RUN apt-get install -y sudo
 RUN apt-get install -y gosu
+RUN rm -rf /var/lib/apt/lists/
 
 ENTRYPOINT [ "entry.sh" ]
+CMD [ "python", "start.py" ]

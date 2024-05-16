@@ -1,12 +1,24 @@
 #!/bin/bash
 
-PUID=${PUID:-6969}
-PGID=${PGID:-6969}
+# Default values for PUID and PGID
+PUID=${PUID:-1000}
+PGID=${PGID:-1000}
 
-groupadd -g "$PGID" myGroup
-useradd -u "$PUID" -g myGroup myUser
+# Check if group already exists
+if ! getent group mygroup > /dev/null 2>&1; then
+  groupadd -g "$PGID" mygroup
+fi
 
-chown -R myUser:myGroup /downloads
-chown -R myUser:myGroup /storage_states
+# Check if user already exists
+if ! id -u myuser > /dev/null 2>&1; then
+  useradd -u "$PUID" -g "$PGID" -m -s /bin/bash myuser
+fi
 
-exec gosu myUser python start.py
+# Change ownership of the home directory
+chown -R myuser:mygroup /home/myuser
+
+chown -R myuser:mygroup /downloads
+chown -R myuser:mygroup /storage_states
+
+# Run the command as the specified user
+exec gosu myuser "$@"
