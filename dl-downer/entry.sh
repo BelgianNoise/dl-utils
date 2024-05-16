@@ -11,5 +11,3 @@ chown myUser:myGroup /cdm
 chown myUser:myGroup /storage_states
 
 id
-
-python ./start.py

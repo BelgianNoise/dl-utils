@@ -32,6 +32,9 @@ COPY . .
 RUN chmod +x /binaries/linux/*
 # Move binaries to /bin
 RUN mv /binaries/linux/* /bin/
+# Move entry.sh to /bin
+RUN chmod +x /entry.sh
+RUN mv /entry.sh /bin/
 
 # install ffmpeg and mkvmerge
 RUN apt-get update
@@ -43,3 +46,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN playwright install --with-deps
 
 CMD [ "entry.sh" ]
+
+ENTRYPOINT [ "python", "start.py" ]
