@@ -28,8 +28,8 @@ fi
 # Change ownership of the home directory
 chown -R "$PUID:$PGID" /home/myuser
 
-chown -R myuser:mygroup /downloads
-chown -R myuser:mygroup /storage_states
+chown -R "$PUID:$PGID" /downloads
+chown -R "$PUID:$PGID" /storage_states
 
 # Run the command as the specified user
 exec gosu "$PUID:$PGID" python start.py "$@"

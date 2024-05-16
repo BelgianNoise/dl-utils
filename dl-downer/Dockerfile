@@ -46,6 +46,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN playwright install --with-deps
 
 RUN apt-get install -y sudo gosu
-RUN rm -rf /var/lib/apt/lists/
 
 ENTRYPOINT [ "entry.sh" ]
