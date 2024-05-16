@@ -4,21 +4,32 @@
 PUID=${PUID:-1000}
 PGID=${PGID:-1000}
 
-# Check if group already exists
-if ! getent group mygroup > /dev/null 2>&1; then
-  groupadd -g "$PGID" mygroup
+# Create the group if it doesn't exist
+if ! getent group "$PGID" > /dev/null 2>&1; then
+    groupadd -g "$PGID" mygroup
+else
+    existing_group=$(getent group "$PGID" | cut -d: -f1)
+    echo "Using existing group: $existing_group"
 fi
 
-# Check if user already exists
-if ! id -u myuser > /dev/null 2>&1; then
-  useradd -u "$PUID" -g "$PGID" -m -s /bin/bash myuser
+# Create the user if it doesn't exist
+if ! id -u "$PUID" > /dev/null 2>&1; then
+    useradd -u "$PUID" -g "$PGID" -m -s /bin/bash myuser
+else
+    existing_user=$(getent passwd "$PUID" | cut -d: -f1)
+    echo "Using existing user: $existing_user"
+fi
+
+# Assign the user to the existing group if the group already existed
+if getent passwd myuser > /dev/null 2>&1; then
+    usermod -aG "$PGID" myuser
 fi
 
 # Change ownership of the home directory
-chown -R myuser:mygroup /home/myuser
+chown -R "$PUID:$PGID" /home/myuser
 
 chown -R myuser:mygroup /downloads
 chown -R myuser:mygroup /storage_states
 
 # Run the command as the specified user
-exec gosu myuser "$@"
+exec gosu "$PUID:$PGID" "$@"
