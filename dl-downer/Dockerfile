@@ -45,6 +45,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 # RUN pip install playwright==@1.42.0
 RUN playwright install --with-deps
 
-CMD [ "entry.sh" ]
-
-ENTRYPOINT [ "python", "start.py" ]
+ENTRYPOINT [ "entry.sh" ]
