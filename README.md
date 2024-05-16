@@ -26,12 +26,12 @@ Python script that monitors a database table for new download requests, if a new
 
 Express.js server exposing 2 endpoints:
 1. `POST /queue/add` - to add download requests to the queue
-2. `GET /queue` - get json representation of the current download queue
+2. `POST /queue` - get json representation of the current download queue
 
 This service acts as a middleman between the chrome extension and the downloader, it stores download requests in a PostgreSQL database for the downloader to pick up.
 This makes it so that the chrome extension can be used on any device without exposing any sensitive information and keeps the downloader from being exposed to the internet.
 
 ## [dl-chrome-extension](dl-chrome-extension/)
 
-This chrome extension adds a download button to all supported websutes, when clicked it sends a download request to the queue service.
-It also shows an overview of the all download requests in the queue, already completed or failed.
+This chrome extension adds a download button to all supported websites, when clicked it sends a download request to the queue service.
+It also shows an overview of all the download requests in the queue, already completed or failed.
