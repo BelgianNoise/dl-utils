@@ -49,4 +49,3 @@ RUN apt-get install -y sudo gosu
 RUN rm -rf /var/lib/apt/lists/
 
 ENTRYPOINT [ "entry.sh" ]
-CMD [ "python", "start.py" ]

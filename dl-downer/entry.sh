@@ -32,4 +32,4 @@ chown -R myuser:mygroup /downloads
 chown -R myuser:mygroup /storage_states
 
 # Run the command as the specified user
-exec gosu "$PUID:$PGID" "$@"
+exec gosu "$PUID:$PGID" python start.py "$@"
