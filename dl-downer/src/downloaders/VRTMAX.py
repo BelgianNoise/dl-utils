@@ -48,6 +48,10 @@ def extract_vrt_cookies():
 
   :returns: cookies List[Cookies], vrt_token: str
   '''
+
+  browser = None
+  playwright = None
+
   try:
     playwright, browser, page = create_playwright_page(DLRequestPlatform.VRTMAX)
 

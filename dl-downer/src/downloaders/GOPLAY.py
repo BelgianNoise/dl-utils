@@ -36,6 +36,10 @@ def extract_goplay_bearer_token() -> str:
   '''
   bearer_token = ''
   state_file = get_storage_state_location(DLRequestPlatform.GOPLAY)
+
+  browser = None
+  playwright = None
+
   try:
     playwright, browser, page = create_playwright_page(DLRequestPlatform.GOPLAY)
 
