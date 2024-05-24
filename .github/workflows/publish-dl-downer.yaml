@@ -3,7 +3,7 @@
 # The image is tagged with the commit SHA and the latest tag.
 # This action should only be triggered when changes were made to
 # the dl-downer directory on the main branch.
-name: Publish dl-downer
+name: Publish dl-downer (ghcr.io)
 
 on:
   push:

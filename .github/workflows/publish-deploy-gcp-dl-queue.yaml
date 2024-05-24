@@ -1,4 +1,4 @@
-name: 'Build docker image, push to GCP Artifact Registry and deploy on GCP Cloud Run'
+name: '[dl-queue] Build - Push - Deploy'
 
 on:
   push:
