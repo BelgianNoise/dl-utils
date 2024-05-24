@@ -31,6 +31,8 @@ Express.js server exposing 2 endpoints:
 This service acts as a middleman between the chrome extension and the downloader, it stores download requests in a PostgreSQL database for the downloader to pick up.
 This makes it so that the chrome extension can be used on any device without exposing any sensitive information and keeps the downloader from being exposed to the internet.
 
+Currently deployed on https://dl-queue.nasaj.be/ (GCP Cloud Run). Don't bother sending requests cause you will just get a 403 without the right `authorization` header.
+
 ## [dl-chrome-extension](dl-chrome-extension/)
 
 This chrome extension adds a download button to all supported websites, when clicked it sends a download request to the queue service.
