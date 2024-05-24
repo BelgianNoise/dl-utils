@@ -1,3 +1,4 @@
+# Not really required anymore but let's just keep it in for now
 name: Publish dl-queue
 
 on:
