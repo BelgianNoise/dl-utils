@@ -45,6 +45,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # RUN pip install playwright==@1.42.0
 RUN playwright install --with-deps
 
-RUN apt-get install -y sudo su-exec
+RUN apt-get install -y sudo
 
 ENTRYPOINT [ "entry.sh" ]
