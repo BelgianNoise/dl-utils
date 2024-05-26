@@ -62,7 +62,7 @@ export async function postQueueAddHandler(
   // Determine which function to call based on the hostname
   if (url.startsWith('https://www.vrt.be/vrtmax/')) {
     downloadRequest.platform = DLRequestPlatform.VRTMAX;
-  } else if (url.startsWith('hhttps://www.vtmgo.be/vtmgo')) {
+  } else if (url.startsWith('https://www.vtmgo.be/vtmgo')) {
     downloadRequest.platform = DLRequestPlatform.VTMGO;
   } else if (url.startsWith('https://www.goplay.be/')) {
     downloadRequest.platform = DLRequestPlatform.GOPLAY;
