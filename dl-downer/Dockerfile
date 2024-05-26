@@ -43,7 +43,7 @@ RUN apt-get install -y ffmpeg mkvtoolnix
 # Install python packages + playwright install
 RUN pip install --no-cache-dir -r requirements.txt
 # RUN pip install playwright==@1.42.0
-RUN playwright install --with-deps
+# RUN playwright install --with-deps
 
 RUN apt-get install -y sudo
 

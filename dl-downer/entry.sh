@@ -32,4 +32,5 @@ chown -R "$PUID:$PGID" /downloads
 chown -R "$PUID:$PGID" /storage_states
 
 # Run the command as the specified user
+sudo -u "#$PUID" -g "#$PGID" playwright install --with-deps
 sudo -E -u "#$PUID" -g "#$PGID" python start.py "$@"
