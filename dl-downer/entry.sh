@@ -32,4 +32,4 @@ chown -R "$PUID:$PGID" /downloads
 chown -R "$PUID:$PGID" /storage_states
 
 # Run the command as the specified user
-exec gosu "$PUID:$PGID" python start.py "$@"
+exec su-exec "$PUID:$PGID" python start.py "$@"
