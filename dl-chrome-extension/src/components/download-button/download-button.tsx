@@ -3,11 +3,21 @@ import "./download-button.css";
 import SVGDownload from "../../svg/svg-download";
 import { downloadCurrentPage } from "./download";
 
-const DownloadButton = () => {
+type DownloadButtonProps = {
+  onClick?: (event: React.MouseEvent) => void;
+  hideText?: boolean;
+};
+
+const DownloadButton = ({
+  onClick = downloadCurrentPage,
+  hideText = false,
+}: DownloadButtonProps) => {
   return (
-    <button id="dl-utils-download-button" onClick={downloadCurrentPage}>
+    <button className={hideText ? 'small-padding' : ''} id="dl-utils-download-button" onClick={onClick}>
       <SVGDownload />
-      <span>Download</span>
+      {!hideText && (
+        <span>Download</span>
+      )}
     </button>
   );
 };

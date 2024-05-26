@@ -20,3 +20,7 @@ button#dl-utils-download-button {
 button#dl-utils-download-button:hover {
   background-color: #ca7d01;
 }
+
+button#dl-utils-download-button.small-padding {
+  padding: 5px;
+}

@@ -20,6 +20,7 @@
       "matches": [
         "*://*.vrt.be/vrtmax/*",
         "*://*.goplay.be/*",
+        "*://*.vtmgo.be/*",
         "*://*.youtube.com/*"
       ],
       "js": ["js/vendor.js", "js/content_script.js"],
@@ -39,6 +40,7 @@
   "host_permissions": [
     "*://*.vrt.be/*",
     "*://*.goplay.be/*",
+    "*://*.vtmgo.be/*",
     "*://*.youtube.com/*"
   ]
 }
