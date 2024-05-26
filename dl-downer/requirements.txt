@@ -3,6 +3,7 @@ requests
 protobuf>=4.25.1
 pywidevine==1.8.0
 playwright==1.42.0
+playwright_stealth
 python-dotenv
 psycopg2-binary
 yt-dlp

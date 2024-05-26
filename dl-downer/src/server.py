@@ -55,6 +55,9 @@ def start_server():
         elif dl_request.platform == DLRequestPlatform.GOPLAY.value:
           from .downloaders.GOPLAY import GOPLAY_DL
           GOPLAY_DL(dl_request)
+        elif dl_request.platform == DLRequestPlatform.VTMGO.value:
+          from .downloaders.VTMGO import VTMGO_DL
+          VTMGO_DL(dl_request)
         elif dl_request.platform == DLRequestPlatform.GENERIC_MANIFEST.value:
           from .downloaders.GENERIC_MANIFEST import GENERIC_MANIFEST_DL
           GENERIC_MANIFEST_DL(dl_request)

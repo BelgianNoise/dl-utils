@@ -93,3 +93,44 @@ def merge_files(
   subprocess.run(command, check=True)
   logger.info(f'Merged successfully!')
 
+def insert_subtitle(
+  input_file: str,
+  subtitle_file: str,
+):
+  did_convert = False
+  # convert to srt if subtitle if needed
+  if subtitle_file.endswith('.vtt'):
+    converted_subtitle_file = os.path.join(
+      os.path.dirname(subtitle_file),
+      f'{os.path.basename(subtitle_file)[:-4]}.srt',
+    )
+    command = [ 'ffmpeg',
+      '-i', subtitle_file,
+      converted_subtitle_file,
+    ]
+    logger.info(f'Converting {subtitle_file} to srt...')
+    subprocess.run(command, check=True)
+    subtitle_file = converted_subtitle_file
+    did_convert = True
+    logger.info(f'Converted successfully!')
+
+  temp_output_file = os.path.join(
+    os.path.dirname(input_file),
+    f'subbed_{os.path.basename(input_file)}',
+  )
+  command = [ 'ffmpeg',
+    '-i', input_file,
+    '-i', subtitle_file,
+    '-c', 'copy',
+    '-y',
+    temp_output_file,
+  ]
+
+  logger.info(f'Inserting subtitle {subtitle_file} into {input_file}...')
+  subprocess.run(command, check=True)
+  # Move the temp file to the original file + overwrite
+  shutil.move(temp_output_file, input_file)
+  # if subs were converted, remove the converted file
+  if did_convert:
+    os.remove(subtitle_file)
+  logger.info(f'Subtitle inserted successfully!')

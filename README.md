@@ -12,7 +12,7 @@ Currently supported content providers:
 |----------------------|-----------|----------|---------------------|
 | VRT MAX              |    ✔️     |    ✔️   |         ✔️          |
 | GoPlay               |    ✔️     |    ✔️   |         ✔️          |
-| VTM GO               |    ❌     |    ❌   |         ❌          |
+| VTM GO               |    ✔️     |    ✔️   |         ❌          |
 | Streamz              |    ❌     |    ❌   |         ❌          |
 | YouTube              |    ✔️     |    ✔️   |         ✔️          |
 | Plain manifest url   |    ✔️     |    ✔️   |         ✔️          |

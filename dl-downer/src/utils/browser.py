@@ -3,6 +3,7 @@ from loguru import logger
 
 from playwright.sync_api import sync_playwright
 from playwright.sync_api import Browser, Page, Playwright
+from playwright_stealth import stealth_sync
 
 from ..models.dl_request_platform import DLRequestPlatform
 
@@ -39,7 +40,7 @@ def create_playwright_page(platform: DLRequestPlatform) -> tuple[Playwright, Bro
   playwright = sync_playwright().start()
   browser = playwright.chromium.launch(
     headless=os.getenv('HEADLESS', 'true') == 'true',
-    slow_mo=50,
+    slow_mo=200,
   )
   custom_context = browser.new_context(
     user_agent=user_agent,
@@ -47,5 +48,6 @@ def create_playwright_page(platform: DLRequestPlatform) -> tuple[Playwright, Bro
     storage_state=get_storage_state_location(platform),
   )
   page = custom_context.new_page()
+  stealth_sync(page)
 
   return (playwright, browser, page)
