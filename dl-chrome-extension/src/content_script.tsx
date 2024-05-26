@@ -160,7 +160,7 @@ function handleURLUpdated() {
   } else if (url.match(/\/vtmgo\/afspelen\//)) {
     // VTM GO
     addButtonVTMGO();
-  } else if (url.match(/\/vtmgo\/[^\/]+$/)) {
+  } else if (url.match(/\/vtmgo\//)) {
     // VTM GO overview
     addButtonVTMGOOverview();
   } else if (url.match(/youtube\.com\/watch/)) {
