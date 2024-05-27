@@ -27,11 +27,10 @@ fi
 
 # Change ownership of the home directory
 chown -R "$PUID:$PGID" /home/myuser
-chown -R "$PUID:$PGID" /app
 
 chown -R "$PUID:$PGID" /downloads
 chown -R "$PUID:$PGID" /storage_states
 
-gosu $PUID:$PGID playwright install
-# Run the specified command as the new user
-exec gosu $PUID:$PGID "$@"
+# Run the command as the specified user
+set -- gosu "$PUID:$PGID" "$@"
+exec python start.py "$@"
