@@ -153,25 +153,26 @@ def VTMGO_DL(dl_request: DLRequest):
   )
 
   # find 'nl-tt' subtitle or default to first subtitle
-  subtitles = config['video']['subtitles']
-  subtitle = None
-  for sub in subtitles:
-    if sub['language'] == 'nl-tt':
-      subtitle = sub
-      break
-  if subtitle is None:
-    subtitle = subtitles[0]
-  subtitle_url = subtitle['url']
-  logger.debug(f'Subtitle: {subtitle_url}')
+  if 'subtitles' in config['video']:
+    subtitles = config['video']['subtitles']
+    subtitle = None
+    for sub in subtitles:
+      if sub['language'] == 'nl-tt':
+        subtitle = sub
+        break
+    if subtitle is None:
+      subtitle = subtitles[0]
+    subtitle_url = subtitle['url']
+    logger.debug(f'Subtitle: {subtitle_url}')
 
-  # download the subtitle and store it next to the video
-  subtitle_response = requests.get(subtitle_url)
-  subtitle_response.raise_for_status()
-  subtitle_filename = f'{downloaded_file}.vtt'
-  with open(subtitle_filename, 'wb') as f:
-    f.write(subtitle_response.content)
-  logger.debug(f'Subtitle saved to {subtitle_filename}')
-  insert_subtitle(downloaded_file, subtitle_filename)
-  os.remove(subtitle_filename)
+    # download the subtitle and store it next to the video
+    subtitle_response = requests.get(subtitle_url)
+    subtitle_response.raise_for_status()
+    subtitle_filename = f'{downloaded_file}.vtt'
+    with open(subtitle_filename, 'wb') as f:
+      f.write(subtitle_response.content)
+    logger.debug(f'Subtitle saved to {subtitle_filename}')
+    insert_subtitle(downloaded_file, subtitle_filename)
+    os.remove(subtitle_filename)
 
   return
