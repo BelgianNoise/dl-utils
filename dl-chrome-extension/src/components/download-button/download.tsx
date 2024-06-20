@@ -14,12 +14,14 @@ export function download(options?: {
     const token = data.token;
     const url = data.url;
     const quality = data.quality;
+    const videoURL = options?.url || window.location.href;
 
     const fetchUrl = new URL('/queue/add', url);
     console.log('Sending download request', {
       url: fetchUrl.toString(),
       token: token,
       quality: quality,
+      video: videoURL,
     });
 
     fetch(
@@ -31,7 +33,7 @@ export function download(options?: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          url: options?.url || window.location.href,
+          url: videoURL,
           preferredQualityMatcher: options?.quality || quality,
           ... (options?.filename) && { outputFilename: options.filename },
         }),

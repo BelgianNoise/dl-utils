@@ -1,4 +1,7 @@
-button#dl-utils-download-button {
+button.dl-utils-download-button {
+  z-index: 10;
+  position: relative;
+
   background: none;
   margin: 0;
 
@@ -17,10 +20,10 @@ button#dl-utils-download-button {
   gap: 10px;
 }
 
-button#dl-utils-download-button:hover {
+button.dl-utils-download-button:hover {
   background-color: #ca7d01;
 }
 
-button#dl-utils-download-button.small-padding {
+button.dl-utils-download-button.small-padding {
   padding: 5px;
 }

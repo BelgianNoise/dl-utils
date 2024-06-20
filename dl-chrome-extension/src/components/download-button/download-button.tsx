@@ -6,17 +6,34 @@ import { downloadCurrentPage } from "./download";
 type DownloadButtonProps = {
   onClick?: (event: React.MouseEvent) => void;
   hideText?: boolean;
+  smallPadding?: boolean;
+  text?: string;
+  styles?: React.CSSProperties;
 };
 
 const DownloadButton = ({
   onClick = downloadCurrentPage,
   hideText = false,
+  smallPadding = false,
+  text = "Download",
+  styles = {},
 }: DownloadButtonProps) => {
+
+  const onClickWithoutPropagation = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    event.preventDefault();
+    onClick(event);
+  }
+
   return (
-    <button className={hideText ? 'small-padding' : ''} id="dl-utils-download-button" onClick={onClick}>
+    <button
+      className={`dl-utils-download-button ${smallPadding ? 'small-padding' : ''}`}
+      onClick={onClickWithoutPropagation}
+      style={styles}
+    >
       <SVGDownload />
       {!hideText && (
-        <span>Download</span>
+        <span>{text}</span>
       )}
     </button>
   );

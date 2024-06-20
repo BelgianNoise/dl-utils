@@ -2,118 +2,14 @@ import { createRoot } from "react-dom/client";
 import React from "react";
 import DownloadButton from "./components/download-button/download-button";
 import { MessageType } from "./types";
-import { download } from "./components/download-button/download";
+import { addButtonsGoPlay } from "./page-buttons/goplay";
+import { addButtonsVTMGO } from "./page-buttons/vtmgo";
+import { addButtonsVRTMAX } from "./page-buttons/vrtmax";
 
 console.log('RUNNING CONTENT SCRIPT')
 
 export const buttonElementId = "dl-utils-download-button";
 export const notificationContainerElementId = "dl-utils-notification-container";
-
-function addButtonVRTMAX(): void {
-  console.log('adding button to VRT MAX')
-  if (document.getElementById(buttonElementId)) return;
-  const el = document.querySelector('sso-login');
-  if (!el) return;
-  const newDiv = document.createElement("div");
-  newDiv.id = buttonElementId;
-  el.parentNode!.insertBefore(newDiv, el);
-  const root = createRoot(newDiv);
-  root.render(
-    <React.StrictMode>
-      <DownloadButton />
-    </React.StrictMode>
-  );
-  console.log('added button to VRT MAX')
-}
-
-function addButtonVTMGO(): void {
-  console.log('adding button to VTM GO')
-  if (document.getElementById(buttonElementId)) return;
-  const el = document.querySelector('main');
-  if (!el) return;
-  const newDiv = document.createElement("div");
-  newDiv.id = buttonElementId;
-  newDiv.style.position = 'absolute';
-  newDiv.style.top = '20px';
-  newDiv.style.right = '20px';
-  el.append(newDiv);
-  const root = createRoot(newDiv);
-  root.render(
-    <React.StrictMode>
-      <DownloadButton />
-    </React.StrictMode>
-  );
-  console.log('added button to VTM GO')
-}
-
-function addButtonVTMGOOverview(): void {
-  console.log('adding buttons to VTM GO')
-  const els = document.querySelectorAll('.block-list .list__item a.media__figure-link');
-  for (const el of els) {
-    const newDiv = document.createElement("div");
-    newDiv.className = buttonElementId;
-    newDiv.style.position = 'absolute';
-    newDiv.style.top = '5px';
-    newDiv.style.right = '5px';
-
-    const href = el.getAttribute('href');
-    if (!href) return;
-    const onClick = (event: React.MouseEvent) => {
-      event.stopPropagation();
-      event.preventDefault();
-      download({ url: href });
-    }
-
-    el.append(newDiv);
-    (el as HTMLLIElement).style.position = 'relative';
-    const root = createRoot(newDiv);
-    root.render(
-      <React.StrictMode>
-        <DownloadButton hideText onClick={onClick} />
-      </React.StrictMode>
-    );
-    console.log('added button to VTM GO')
-  }
-}
-
-function addButtonGoPlaySeries(): void {
-  console.log('adding button to GoPlay')
-  if (document.getElementById(buttonElementId)) return;
-  const el = document.querySelector('div.sbs-video__info h1.sbs-video__title');
-  if (!el) return;
-  const newDiv = document.createElement("div");
-  newDiv.id = buttonElementId;
-  el.parentNode!.insertBefore(newDiv, el);
-  const root = createRoot(newDiv);
-  root.render(
-    <React.StrictMode>
-      <DownloadButton />
-    </React.StrictMode>
-  );
-  console.log('added button to GoPlay')
-}
-
-function addButtonGoPlayMovie(): void {
-  console.log('adding button to GoPlay')
-  if (document.getElementById(buttonElementId)) return;
-  const el = document.querySelector('main.l-content > article');
-  if (!el) return;
-  (el as HTMLDivElement).style.position = 'relative';
-  const newDiv = document.createElement("div");
-  newDiv.id = buttonElementId;
-  newDiv.style.position = 'absolute';
-  newDiv.style.left = '50%';
-  newDiv.style.top = '0';
-  newDiv.style.transform = 'translateX(-50%) translateY(-50%)';
-  el.append(newDiv);
-  const root = createRoot(newDiv);
-  root.render(
-    <React.StrictMode>
-      <DownloadButton />
-    </React.StrictMode>
-  );
-  console.log('added button to GoPlay')
-}
 
 function addButtonYouTube(): void {
   console.log('adding button to YouTube')
@@ -138,36 +34,18 @@ function addButtonYouTube(): void {
   console.log('added button to YouTube')
 }
 
-function removeButton(): void {
-  const el = document.getElementById(buttonElementId);
-  if (el) {
-    el.remove();
-  }
-}
-
 function handleURLUpdated() {
   const url = window.location.href;
   console.log('URL updated:', url);
-  if (url.match(/\/a-z\/([\w-]+?)\/([\w-]+?)\/([\w-]+?)\/?$/)) {
-    // VRT MAX
-    addButtonVRTMAX();
-  } else if (url.match(/\/video\/[\w-]+?\/[\w-]+?\/[\w-]+?(#autoplay)?$/)) {
-    // GOPLAY SERIES
-    addButtonGoPlaySeries();
-  } else if (url.match(/\/video\/([\w-]+?\/[\w-]+?\/)?[\w-]+?(#autoplay)?$/)) {
-    // GOPLAY MOVIE
-    addButtonGoPlayMovie();
-  } else if (url.match(/\/vtmgo\/afspelen\//)) {
-    // VTM GO
-    addButtonVTMGO();
-  } else if (url.match(/\/vtmgo\//)) {
-    // VTM GO overview
-    addButtonVTMGOOverview();
+  if (url.match('vrt.be/vrtmax')) {
+    addButtonsVRTMAX(url);
+  } else if (url.match('goplay.be')) {
+    addButtonsGoPlay(url);
+  } else if (url.match('vtmgo.be')) {
+    addButtonsVTMGO(url);
   } else if (url.match(/youtube\.com\/watch/)) {
     // YOUTUBE
     addButtonYouTube();
-  } else {
-    removeButton();
   }
 }
 
