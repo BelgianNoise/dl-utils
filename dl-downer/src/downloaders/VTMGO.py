@@ -67,6 +67,7 @@ def get_vtmgo_data(video_page_url: str):
     config_response = None
     max_wait = 10
     while config_response is None:
+      print(f'Config response attempt {10 - max_wait}')
       if max_wait == 0:
         raise Exception('Failed to get config response, tried 10 times :/')
       max_wait -= 1
@@ -126,7 +127,7 @@ def VTMGO_DL(dl_request: DLRequest):
   manifest_response.raise_for_status()
   logger.debug(f'Manifest response status: {manifest_response.status_code}')
   try:
-    pssh = re.findall(r'<cenc:pssh[^>]*>(.{,180})</cenc:pssh>', manifest_response.text)[0]
+    pssh = re.findall(r'<cenc:pssh[^>]*>(.{,240})</cenc:pssh>', manifest_response.text)[0]
     assert pssh
   except:
     raise Exception(f'Failed to find pssh in manifest: {manifest_response.text}')
