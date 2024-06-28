@@ -123,7 +123,12 @@ def VTMGO_DL(dl_request: DLRequest):
   # get pssh from mpd
   manifest_response = requests.get(mpd_url)
   manifest_response.raise_for_status()
-  pssh = re.findall(r'<cenc:pssh[^>]*>(.{,180})</cenc:pssh>', manifest_response.text)[0]
+  logger.debug(f'Manifest response status: {manifest_response.status_code}')
+  try:
+    pssh = re.findall(r'<cenc:pssh[^>]*>(.{,180})</cenc:pssh>', manifest_response.text)[0]
+    assert pssh
+  except:
+    raise Exception(f'Failed to find pssh in manifest: {manifest_response.text}')
   logger.debug(f'PSSH: {pssh}')
 
   cdm = Local_CDM()
