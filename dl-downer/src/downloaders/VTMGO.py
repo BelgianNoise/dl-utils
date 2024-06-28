@@ -67,7 +67,7 @@ def get_vtmgo_data(video_page_url: str):
     config_response = None
     max_wait = 10
     while config_response is None:
-      print(f'Config response attempt {10 - max_wait}')
+      logger.debug(f'Config response attempt {10 - max_wait + 1}')
       if max_wait == 0:
         raise Exception('Failed to get config response, tried 10 times :/')
       max_wait -= 1
