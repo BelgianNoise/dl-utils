@@ -65,18 +65,19 @@ def get_vtmgo_data(video_page_url: str):
       page.context.storage_state(path=get_storage_state_location(DLRequestPlatform.VTMGO))
 
     config_response = None
-    def handle_response(response):
-      nonlocal config_response
-      if 'https://videoplayer-service.dpgmedia.net/play-config/' in response.url:
-        config_response = response
-    page.on('response', handle_response)
-    page.goto(video_page_url, wait_until='load')
     max_wait = 10
     while config_response is None:
-      time.sleep(2)
       if max_wait == 0:
-        raise Exception('Failed to get config response')
+        raise Exception('Failed to get config response, tried 10 times :/')
       max_wait -= 1
+      def handle_response(response):
+        nonlocal config_response
+        if 'https://videoplayer-service.dpgmedia.net/play-config/' in response.url:
+          config_response = response
+      page.on('response', handle_response)
+      page.goto(video_page_url, wait_until='load')
+      time.sleep(4)
+
     logger.debug('Got config response')
     config = config_response.json()
 
