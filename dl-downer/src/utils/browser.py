@@ -38,7 +38,8 @@ def create_playwright_page(platform: DLRequestPlatform) -> tuple[Playwright, Bro
   '''
 
   playwright = sync_playwright().start()
-  browser = playwright.chromium.launch(
+  engine = playwright.webkit if platform == DLRequestPlatform.VTMGO else playwright.chromium
+  browser = engine.launch(
     headless=os.getenv('HEADLESS', 'true') == 'true',
     slow_mo=200,
   )
