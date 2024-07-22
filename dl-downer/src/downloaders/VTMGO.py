@@ -115,10 +115,17 @@ def VTMGO_DL(dl_request: DLRequest):
   else:
     # use metadata to generate filename
     metadata = config['video']['metadata']
-    prog = metadata['program']['title']
-    ep = metadata['episode']['order']
-    season = metadata['episode']['season']['order']
-    filename = f'{prog}.S{season:02}E{ep:02}'
+    # check if 'episode' exists in metadata
+    if 'episode' not in metadata:
+      # Movie
+      prog = metadata['title']
+      filename = f'{prog}'
+    else:
+      # Series
+      ep = metadata['episode']['order']
+      season = metadata['episode']['season']['order']
+      prog = metadata['program']['title']
+      filename = f'{prog}.S{season:02}E{ep:02}'
     filename = parse_filename(filename)
   logger.debug(f'Filename: {filename}')
   
