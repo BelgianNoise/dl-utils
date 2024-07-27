@@ -54,7 +54,7 @@ function addSeasonButton(): void {
       .map((el) => el.getAttribute('href'))
       .filter((url) => url !== null)
       .map((url) => url!.startsWith('http') ? url : window.location.origin + url)
-      .sort((a, b) => a.localeCompare(b));
+      .sort((a, b) => a!.localeCompare(b!));
     
     for (const video of videoUrls) {
       if (video) download({ url: video });
