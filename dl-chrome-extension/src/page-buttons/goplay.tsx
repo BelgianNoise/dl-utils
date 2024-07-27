@@ -21,14 +21,14 @@ export function addButtonsGoPlay(url: string): void {
     addButtonGoPlaySeries();
   } else if (url.match(/\/video\/([\w-]+?\/[\w-]+?\/)?[\w-]+?(#autoplay)?$/)) {
     // GOPLAY MOVIE
-    addButtonGoPlayMovie();
+    addButtonGoPlaySeries();
   }
 }
 
 function addButtonGoPlaySeries(): void {
   console.log('adding button to GoPlay')
   if (document.getElementById(GoPlaySeriesButton)) return;
-  const el = document.querySelector('div.sbs-video__info h1.sbs-video__title');
+  const el = document.querySelector('div.videoInfo h1');
   if (!el) return;
   const newDiv = document.createElement("div");
   newDiv.id = GoPlaySeriesButton;
@@ -42,44 +42,19 @@ function addButtonGoPlaySeries(): void {
   console.log('added button to GoPlay')
 }
 
-function addButtonGoPlayMovie(): void {
-  console.log('adding button to GoPlay')
-  if (document.getElementById(GoPlayMovieButton)) return;
-  const el = document.querySelector('main.l-content > article');
-  if (!el) return;
-  (el as HTMLDivElement).style.position = 'relative';
-  const newDiv = document.createElement("div");
-  newDiv.id = GoPlayMovieButton;
-  newDiv.style.position = 'absolute';
-  newDiv.style.left = '50%';
-  newDiv.style.top = '0';
-  newDiv.style.transform = 'translateX(-50%) translateY(-50%)';
-  el.append(newDiv);
-  const root = createRoot(newDiv);
-  root.render(
-    <React.StrictMode>
-      <DownloadButton />
-    </React.StrictMode>
-  );
-  console.log('added button to GoPlay')
-}
-
 function addButtonsGoPlaySwimlane(): void {
-  addDownloadIconButtonsToElements('div.swimlane-section ul li a[href*="/video"]');
+  addDownloadIconButtonsToElements('ul li a[href*="/video"]');
 }
 
 function addSeasonButton(): void {
   if (document.getElementById(GoPlaySeasonButton)) return;
 
   const addSeasonToQueue = () => {
-    const seasonContainer = document.querySelector('div#afleveringen.seasons');
-    if (!seasonContainer) return;
-  
-    // find all video urls in the swimlane
-    const videoUrls = Array.from(seasonContainer.querySelectorAll('a[href*="/video"]'))
+    const videoUrls = Array.from(document.querySelectorAll('ul li a[href*="/video"]'))
       .map((el) => el.getAttribute('href'))
       .filter((url) => url !== null)
-      .map((url) => url!.startsWith('http') ? url : window.location.origin + url);
+      .map((url) => url!.startsWith('http') ? url : window.location.origin + url)
+      .sort((a, b) => a.localeCompare(b));
     
     for (const video of videoUrls) {
       if (video) download({ url: video });
@@ -87,12 +62,14 @@ function addSeasonButton(): void {
   }
 
   // Add download button to the page
-  const el = document.querySelector('#afleveringen .playlist-toggle');
+  const el: HTMLDivElement | null = document.querySelector('div:has(> div#season)');
   if (!el) return;
   const newDiv = document.createElement("div");
   newDiv.id = GoPlaySeasonButton;
   el.append(newDiv);
+  el.style.display = 'flex';
   const root = createRoot(newDiv);
+  console.log('Adding season button');
   root.render(
     <React.StrictMode>
       <DownloadButton

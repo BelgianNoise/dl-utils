@@ -9,8 +9,10 @@ export function addDownloadIconButtonsToElements(
   selector: string,
 ): void {
   const els = document.querySelectorAll(selector);
-  console.log(`Attempting to add ${els.length} download buttons`);
-  for (const el of els) {
+  // Filter out els that already have a download button
+  const filteredEls = Array.from(els).filter(el => !el.querySelector(`.${GenericButton}`));
+  console.log(`Attempting to add ${filteredEls.length} download buttons`);
+  for (const el of filteredEls) {
     if (el.querySelector(`.${GenericButton}`)) continue;
     addDownloadIconButton(el);
     console.log('added download button to element');
