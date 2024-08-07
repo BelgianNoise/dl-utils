@@ -1,4 +1,3 @@
-import base64
 import json
 import re
 import os
@@ -81,13 +80,12 @@ def extract_goplay_bearer_token() -> str:
   # read idToken from state file
   with open(state_file, 'r') as f:
     state = json.load(f)
-    for origin in state['origins']:
-      if origin['origin'] == 'https://www.goplay.be':
-        local_storage_entries = origin['localStorage']
-        for entry in local_storage_entries:
-          if entry['name'] and entry['name'].endswith('idToken'):
-            bearer_token = entry['value']
-            break
+    # logger.debug(f'browser state: {json.dumps(state, indent=2)}')
+    for cookie in state['cookies']:
+      if cookie['domain'] == 'www.goplay.be':
+        if cookie['name'].endswith('idToken'):
+          bearer_token = cookie['value']
+          break
   logger.debug(f'Bearer: {bearer_token}')
   return bearer_token
 
@@ -107,9 +105,11 @@ def GOPLAY_DL(dl_request: DLRequest):
   obj = json.loads(obj_string)
 
   video_object = obj['video']
-  # logger.debug(f'Video object: {video_object}')
+  # logger.debug(f'Video object: {json.dumps(video_object, indent=2)}')
   video_uuid = video_object['uuid']
   type_form = video_object['videoType']
+  # Transform 'longForm' to 'long-form' for the URL
+  type_form = re.sub(r'([a-z])([A-Z])', r'\1-\2', type_form).lower()
   is_drm = video_object['flags']['isDrm']
   if dl_request.output_filename is None:
     title = video_object['title']
@@ -122,81 +122,41 @@ def GOPLAY_DL(dl_request: DLRequest):
   logger.debug(f'Is DRM: {is_drm}')
   logger.debug(f'Title: {title}')
 
-  stream_collection = video_object['streamCollection']
-  stream_collection_streams = stream_collection['streams']
-  stream_drm_protected = stream_collection['drmProtected']
-  # Find dash stream
-  stream_manifest = ''
-  for stream in stream_collection_streams:
-    if stream['protocol'] == 'dash':
-      stream_manifest = stream['url']
-      break
-  if stream_manifest == '':
-    logger.error('No dash stream found')
-    return
+  # get video data
+  video_data_url = f'https://api.goplay.be/web/v1/videos/{type_form}/{video_uuid}'
+  logger.debug(f'Video data URL: {video_data_url}')
+  bearer_token = extract_goplay_bearer_token()
+  video_data_resp = requests.get(
+    video_data_url,
+    headers={ 'authorization': f'Bearer {bearer_token}' },
+  )
+  if video_data_resp.status_code != 200:
+    logger.debug(video_data_resp.text)
+  video_data = video_data_resp.json()
+  # logger.debug(f'Video data: {json.dumps(video_data, indent=2)}')
+  content_source_id = video_data['ssai']['contentSourceID']
+  logger.debug(f'Content source ID: {content_source_id}')
+  video_id = video_data['ssai']['videoID']
+  logger.debug(f'Video ID: {video_id}')
+
+  # get video streams
+  streams_resp = requests.post(f'https://pubads.g.doubleclick.net/ondemand/dash/content/{content_source_id}/vid/{video_id}/streams')
+  streams = streams_resp.json()
+  stream_manifest = streams['stream_manifest']
+
   logger.debug(f'Stream manifest: {stream_manifest}')
-  logger.debug(f'DRM protected: {stream_drm_protected}')
 
   keys = {}
 
-  if is_drm or stream_drm_protected:
-    raise NotImplementedError('DRM protected content not supported')
+  if is_drm:
+    drm_xml = video_data['drmXml']
+    logger.debug(f'DRM XML: {drm_xml}')
     manifest_response = requests.get(stream_manifest)
-    pssh = re.findall(r'<cenc:pssh[^>]*>(.{,120})</cenc:pssh>', manifest_response.text)[0]
+    pssh = re.findall(r'<pssh[^>]*>(.{,120})</pssh>', manifest_response.text)[0]
     logger.debug(f'PSSH: {pssh}')
     cdm = Local_CDM()
     challenge = cdm.generate_challenge(pssh)
-    drm_key = stream_collection['drmKey']
-    custom_data_xml = f'''<?xml version="1.0" encoding="UTF-8"?>
-<KeyOSAuthenticationXML>
-  <Data>
-    <WidevinePolicy fl_CanPersist="false" fl_CanPlay="true"/>
-    <WidevineContentKeySpec TrackType="HD">
-      <SecurityLevel>1</SecurityLevel>
-      <RequiredHDCP>HDCP_NONE</RequiredHDCP>
-      <RequiredCGMS>CGMS_NONE</RequiredCGMS>
-    </WidevineContentKeySpec>
-    <FairPlayPolicy persistent="false">
-      <HDCPEnforcement>HDCP_NONE</HDCPEnforcement>
-    </FairPlayPolicy>
-    <License type="simple">
-      <KeyId>{drm_key}</KeyId>
-      <Policy>
-        <Id>962c4b25-4c65-4b21-a6a3-fe2c7590053c</Id>
-      </Policy>
-      <Play>
-        <Id>c7e7a2b0-87ad-4659-b59b-e5edf68bd5ea</Id>
-      </Play>
-    </License>
-    <Policy id="962c4b25-4c65-4b21-a6a3-fe2c7590053c">
-      <MinimumSecurityLevel>2000</MinimumSecurityLevel>
-    </Policy>
-    <Play id="c7e7a2b0-87ad-4659-b59b-e5edf68bd5ea">
-      <OutputProtections>
-        <OPL>
-          <CompressedDigitalVideo>500</CompressedDigitalVideo>
-          <UncompressedDigitalVideo>250</UncompressedDigitalVideo>
-          <AnalogVideo>150</AnalogVideo>
-        </OPL>
-        <AnalogVideoExplicit>
-          <Id ConfigData="1">C3FD11C6-F8B7-4D20-B008-1DB17D61F2DA</Id>
-        </AnalogVideoExplicit>
-      </OutputProtections>
-    </Play>
-    <KeyIDList>
-      <KeyID>{drm_key}</KeyID>
-    </KeyIDList>
-    <Username>local</Username>
-    <GenerationTime>2024-07-28 17:01:37.817</GenerationTime>
-    <ExpirationTime>2024-07-28 17:11:37.817</ExpirationTime>
-    <UniqueId>4dcdb908372d410cad01c0fc4120911e</UniqueId>
-    <RSAPubKeyId>3c202c0ea50420870eb63e2412fa69f9</RSAPubKeyId>
-  </Data>
-  <Signature>kDDHB7xDVEbJMb6DucvdA0PxoeUslNn4AkqMq+kKMQQ/zATmjAYmE+iV8pcLanwPIp9kjKt6/RFcZuoYov8F2gWKfvaeSrxvBIMbjsmXpvoio61Kvl9GmnFkjh8KZxFDj23XxZ+dpCmoveUFSJvbq8VAsRqkCQGtpOJMzPdkdifE/TxmyIJXI0f6x5jPThpu/muqpaYLRCzpscbURx5vbU5kOSYDFcgEdL3jgoP4aOlM7p4mwo7FLyifNtqTNCP1+eKwIZf1ZkfhK7JHPFxOo7a//CaCaG52ER6amo2KloR+Vh1xWY4TPAiAj7VdxAac4Sp+AZpak79hdrpwZEDyig==</Signature>
-</KeyOSAuthenticationXML>
-    '''
-    base64_custom_data = base64.b64encode(custom_data_xml.encode()).decode()
-    headers = { 'Customdata': base64_custom_data }
+    headers = { 'Customdata': drm_xml }
     lic_res = requests.post('https://widevine.keyos.com/api/v4/getLicense', data=challenge, headers=headers)
     lic_res.raise_for_status()
     keys = cdm.decrypt_response(lic_res.content)
