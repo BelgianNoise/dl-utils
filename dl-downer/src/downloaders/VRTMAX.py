@@ -59,15 +59,13 @@ def extract_vrt_cookies():
     handle_vrt_consent_popup(page)
 
     try:
-      page.hover('sso-login')
-      page.wait_for_selector('li.menu-link a.afmelden', timeout=2000)
+      page.wait_for_selector('sso-login .loggedIn', timeout=2000)
       logger.debug('Already logged in')
       cookies = page.context.cookies()
       page.context.storage_state(path=get_storage_state_location(DLRequestPlatform.VRTMAX))
     except:
       logger.debug('Logging in ...')
-      page.hover('sso-login')
-      loginButton = page.wait_for_selector('a.realAanmelden')
+      loginButton = page.wait_for_selector('sso-login .loggedOut')
       loginButton.click()
       emailInput = page.wait_for_selector('input#email-id-email')
       assert os.getenv('AUTH_VRTMAX_EMAIL'), 'AUTH_VRTMAX_EMAIL not set'
@@ -78,8 +76,7 @@ def extract_vrt_cookies():
       submitButton = page.wait_for_selector('form button[type="submit"]')
       submitButton.click()
 
-      page.hover('sso-login')
-      page.wait_for_selector('li.menu-link a.afmelden')
+      page.wait_for_selector('sso-login .loggedIn', timeout=10000)
       logger.debug('Logged in successfully')
       cookies = page.context.cookies()
       page.context.storage_state(path=get_storage_state_location(DLRequestPlatform.VRTMAX))
