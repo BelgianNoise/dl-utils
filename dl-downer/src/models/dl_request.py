@@ -92,4 +92,8 @@ class DLRequest:
     extension: str = 'mp4',
   ):
     save_dir = os.getenv('DOWNLOADS_FOLDER', './downloads')
-    return os.path.join(save_dir, self.platform, f'{filename}.{extension}')
+    desired_location = os.path.join(save_dir, self.platform, f'{filename}.{extension}')
+    # if the desired file already exists, add a timestamp to the filename
+    if os.path.exists(desired_location):
+      return os.path.join(save_dir, self.platform, f'{filename}-{datetime.now().strftime("%Y%m%d%H%M%S")}.{extension}')
+    return desired_location
