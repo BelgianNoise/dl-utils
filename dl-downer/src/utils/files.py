@@ -134,3 +134,28 @@ def insert_subtitle(
   if did_convert:
     os.remove(subtitle_file)
   logger.info(f'Subtitle inserted successfully!')
+
+def convert_to_mkv(
+  input_file: str,
+  delete_original: bool = False,
+):
+  output_file = os.path.join(
+    os.path.dirname(input_file),
+    f'{os.path.basename(input_file)[:-4]}.mkv',
+  )
+  command = [ 'ffmpeg',
+    '-i', input_file,
+    '-c', 'copy',
+    '-y',
+    output_file,
+  ]
+
+  logger.info(f'Converting {input_file} to mkv...')
+  subprocess.run(command, check=True)
+  logger.info(f'Converted successfully!')
+
+  if delete_original:
+    logger.debug(f'Deleting original file {input_file}')
+    os.remove(input_file)
+
+  return output_file

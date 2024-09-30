@@ -35,6 +35,9 @@ class MPDDownloadOptions():
         then all periods' video files will be merged.
         This option is useful when the audio and video of a specific period are not the same length,
         but all segments together are. (Looking at you GoPlay)
+    convert_to_mkv (bool):
+      Whether to convert the downloaded files to MKV.
+      Default is True.
 
   '''
   def __init__(
@@ -45,6 +48,7 @@ class MPDDownloadOptions():
     decrypt_keys: dict[str, str] = {},
     ignore_periods: List[str] = [],
     merge_method: str = 'period',
+    convert_to_mkv: bool = True,
   ):
     self.video_resolution = video_resolution
     self.audio_language = audio_language
@@ -52,6 +56,7 @@ class MPDDownloadOptions():
     self.decrypt_keys = decrypt_keys
     self.ignore_periods = ignore_periods
     self.merge_method = merge_method
+    self.convert_to_mkv = convert_to_mkv
   def __str__(self):
     return f'<MPDDownloadOptions(video_resolution={self.video_resolution}, audio_language={self.audio_language}, subtitle_language={self.subtitle_language})>'
   def __repr__(self):

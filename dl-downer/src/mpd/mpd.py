@@ -10,7 +10,7 @@ import xml.etree.ElementTree as ET
 
 from .period import Period
 from .mpd_download_options import MPDDownloadOptions
-from ..utils.files import concat_files, merge_files
+from ..utils.files import concat_files, merge_files, convert_to_mkv
 
 class MPD:
   def __init__(
@@ -150,8 +150,11 @@ class MPD:
     out_file = os.path.join(tmp_dir, os.path.basename(created_file))
     shutil.move(created_file, out_file)
 
+    if download_options.convert_to_mkv:
+      out_file = convert_to_mkv(out_file, delete_original=True)
+
     # Delete own tmp folder
-    # shutil.rmtree(my_tmp_dir)
+    shutil.rmtree(my_tmp_dir)
 
     logger.debug(f'Downloaded MPD to {out_file}')
     return out_file
