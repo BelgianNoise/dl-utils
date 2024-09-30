@@ -10,7 +10,7 @@ import xml.etree.ElementTree as ET
 
 from .period import Period
 from .mpd_download_options import MPDDownloadOptions
-from ..utils.files import concat_files
+from ..utils.files import concat_files, merge_files
 
 class MPD:
   def __init__(
@@ -81,7 +81,7 @@ class MPD:
     my_tmp_dir = os.path.join(tmp_dir, f'mpd-{my_uuid}')
     os.makedirs(my_tmp_dir, exist_ok=True)
     # download all periods
-    files_to_concat = []
+    period_download_results = []
 
     for period in self.periods:
 
@@ -96,24 +96,62 @@ class MPD:
         logger.debug(f'Ignoring period {period.id}')
         continue
 
-      period_file = period.download(my_tmp_dir, self.base_url, download_options)
-      files_to_concat.append(period_file)
+      period_download_result = period.download(my_tmp_dir, self.base_url, download_options)
+      period_download_results.append(period_download_result)
 
-    if len(files_to_concat) == 0:
+    if len(period_download_results) == 0:
       raise Exception(f'No periods were downloaded {self.periods}')
-    # some manifests will have multiple periods, in that case we need to concat them
-    created_file = files_to_concat[0]
-    # concat all files
-    if len(files_to_concat) > 1:
-      created_file = os.path.join(my_tmp_dir, f'combined-{my_uuid}.mp4')
-      concat_files(files_to_concat, created_file)
+    
+    # validate period_download_results should be a list[List[str]]
+    if not all(isinstance(period_download_result, list) for period_download_result in period_download_results):
+      raise Exception(f'Expected period_download_results to be a list of lists, got {period_download_results}')
+
+    if download_options.merge_method == 'period':
+      # simply concat all periods
+
+      # some manifests will have multiple periods, in that case we need to concat them
+      created_file = period_download_results[0]
+      # concat all files
+      if len(period_download_results) > 1:
+        created_file = os.path.join(my_tmp_dir, f'combined-periods-{my_uuid}.mp4')
+        # All elements of the list should be of length 1
+        if not all(len(period_download_result) == 1 for period_download_result in period_download_results):
+          raise Exception(f'Expected period_download_results to be a list of lists with length 1, got {period_download_results}')
+        # lambda to get all first elements of the sublists
+        files_to_merge = list(map(lambda x: x[0], period_download_results))
+        concat_files(files_to_merge, created_file)
+    elif download_options.merge_method == 'format':
+      if len(period_download_results) < 1:
+        raise Exception(f'Expected at least one period to be downloaded, got {period_download_results}')
+      # All elements of the list should be of length 2
+      if not all(len(period_download_result) == 2 for period_download_result in period_download_results):
+        raise Exception(f'Expected period_download_results to be a list of lists with length 2, got {period_download_results}')
+      # lambda to get all first elements of the sublists
+      audio_files_to_merge = list(map(lambda x: x[0], period_download_results))
+      # lambda to get all second elements of the sublists
+      video_files_to_merge = list(map(lambda x: x[1], period_download_results))
+      # merge audio files
+      audio_file = audio_files_to_merge[0]
+      if len(audio_files_to_merge) > 1:
+        audio_file = os.path.join(my_tmp_dir, f'audio-{my_uuid}.mp4')
+        concat_files(audio_files_to_merge, audio_file)
+      # merge video files
+      video_file = video_files_to_merge[0]
+      if len(video_files_to_merge) > 1:
+        video_file = os.path.join(my_tmp_dir, f'video-{my_uuid}.mp4')
+        concat_files(video_files_to_merge, video_file)
+      # merge audio and video files
+      created_file = os.path.join(my_tmp_dir, f'merged-formats-{my_uuid}.mp4')
+      merge_files([audio_file, video_file], created_file)
+    else:
+      raise Exception(f'Unknown merge method {download_options.merge_method}')
 
     # move the file to the output folder
     out_file = os.path.join(tmp_dir, os.path.basename(created_file))
     shutil.move(created_file, out_file)
 
     # Delete own tmp folder
-    shutil.rmtree(my_tmp_dir)
+    # shutil.rmtree(my_tmp_dir)
 
     logger.debug(f'Downloaded MPD to {out_file}')
     return out_file

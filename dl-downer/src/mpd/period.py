@@ -55,8 +55,15 @@ class Period:
     tmp_dir: str,
     base_url: str,
     download_options: MPDDownloadOptions = None,
-  ) -> str:
-    ''':return: the path to the downloaded period mp4 file'''
+  ) -> List[str]:
+    '''
+      :return:
+        If download_options.merge_method is 'period',
+          the path to the downloaded period mp4 file in returned as a single element list.
+        If download_options.merge_method is 'format',
+          the paths to the downloaded audio and video files are returned as a list ([ audio, video ]).
+          paths can be None in this case.
+    '''
     logger.debug(f'Downloading period {self.id}')
     # Create a temporary folder
     my_uuid = str(uuid.uuid4())[:8]
@@ -64,7 +71,8 @@ class Period:
     os.makedirs(my_tmp_dir, exist_ok=True)
 
     # Keep track of all files that need to be merged
-    files_to_merge = []
+    audio_files_to_merge = []
+    video_files_to_merge = []
 
     # Find audio adaptation sets
     audio_adaptation_sets = list(filter(lambda adaptation_set: adaptation_set.mime_type.startswith('audio/'), self.adaptation_sets))
@@ -72,7 +80,10 @@ class Period:
     for audio_adaptation_set in audio_adaptation_sets:
       audio_file = audio_adaptation_set.download(my_tmp_dir, base_url, download_options)
       if audio_file is not None:
-        files_to_merge.append(audio_file)
+        audio_files_to_merge.append(audio_file)
+        # if merge_method == 'format' we break the for loop, we only want one audio file
+        if download_options.merge_method == 'format':
+          break
     
     # Find video adaptation sets
     video_adaptation_sets = list(filter(lambda adaptation_set: adaptation_set.mime_type.startswith('video/'), self.adaptation_sets))
@@ -80,17 +91,41 @@ class Period:
     for video_adaptation_set in video_adaptation_sets:
       video_file = video_adaptation_set.download(my_tmp_dir, base_url, download_options)
       if video_file is not None:
-        files_to_merge.append(video_file)
+        video_files_to_merge.append(video_file)
+        # if merge_method == 'format' we break the for loop, we only want one video file
+        if download_options.merge_method == 'format':
+          break
+    
+    def cleanUp():
+      # Delete own tmp folder
+      shutil.rmtree(my_tmp_dir)
 
-    # merge audio and video files
-    merged_file = os.path.join(my_tmp_dir, f'merged-{my_uuid}.mp4')
-    merge_files(files_to_merge, merged_file)
-    # move the merged file to the tmp_dir
-    out_file = os.path.join(tmp_dir, os.path.basename(merged_file))
-    shutil.move(merged_file, out_file)
+    if download_options.merge_method == 'period':
+      # merge audio and video files
+      merged_file = os.path.join(my_tmp_dir, f'merged-{my_uuid}.mp4')
+      all_files_to_merge = audio_files_to_merge + video_files_to_merge
+      merge_files(all_files_to_merge, merged_file)
+      # move the merged file to the tmp_dir
+      out_file = os.path.join(tmp_dir, os.path.basename(merged_file))
+      shutil.move(merged_file, out_file)
+      cleanUp()
+      logger.debug(f'Downloaded period {self.id} to {out_file}')
+      return [out_file]
+    elif download_options.merge_method == 'format':
+      # We expect only one audio and one video file
+      # Move them to the tmp_dir and return [audio_file, video_file]
+      audio_out_file = None
+      if len(audio_files_to_merge) > 0:
+        audio_out_file = os.path.join(tmp_dir, os.path.basename(audio_files_to_merge[0]))
+        shutil.move(audio_files_to_merge[0], audio_out_file)
+      video_out_file = None
+      if len(video_files_to_merge) > 0:
+        video_out_file = os.path.join(tmp_dir, os.path.basename(video_files_to_merge[0]))
+        shutil.move(video_files_to_merge[0], video_out_file)
+      cleanUp()
+      logger.debug(f'Downloaded period {self.id} to {audio_out_file} and {video_out_file}')
+      return [audio_out_file, video_out_file]
+      
+    else:
+      raise Exception(f'Unknown merge method {download_options.merge_method}')
 
-    # Delete own tmp folder
-    shutil.rmtree(my_tmp_dir)
-
-    logger.debug(f'Downloaded period {self.id} to {out_file}')
-    return out_file

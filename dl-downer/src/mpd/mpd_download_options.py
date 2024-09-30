@@ -27,6 +27,15 @@ class MPDDownloadOptions():
     ignore_periods (List[str]):
       A list of periods to ignored, as a regex pattern.
       Example: [ '^pre-roll.*' ]
+    merge_method ('period' | 'format'):
+      The method to use for merging the files.
+      Default is 'period'.
+      'period' will merge the files per period.
+      'format' will merge the files per format. First all periods' audio files will be merged,
+        then all periods' video files will be merged.
+        This option is useful when the audio and video of a specific period are not the same length,
+        but all segments together are. (Looking at you GoPlay)
+
   '''
   def __init__(
     self,
@@ -35,12 +44,14 @@ class MPDDownloadOptions():
     subtitle_language: str = 'all',
     decrypt_keys: dict[str, str] = {},
     ignore_periods: List[str] = [],
+    merge_method: str = 'period',
   ):
     self.video_resolution = video_resolution
     self.audio_language = audio_language
     self.subtitle_language = subtitle_language
     self.decrypt_keys = decrypt_keys
     self.ignore_periods = ignore_periods
+    self.merge_method = merge_method
   def __str__(self):
     return f'<MPDDownloadOptions(video_resolution={self.video_resolution}, audio_language={self.audio_language}, subtitle_language={self.subtitle_language})>'
   def __repr__(self):
