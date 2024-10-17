@@ -10,7 +10,7 @@ from loguru import logger
 from .segment_template import SegmentTemplate
 from .representation import Representation
 from .mpd_download_options import MPDDownloadOptions
-from ..utils.files import decrypt_file
+from ..utils.files import decrypt_file, defragment_mp4
 
 class AdaptationSet:
   def __init__(
@@ -180,6 +180,11 @@ class AdaptationSet:
         decrypted_file = decrypt_file(created_file, download_options.decrypt_keys)
         # replace created_file with decrypted_file
         created_file = decrypted_file
+
+    # defragment the file, just in case
+    defragmented_file = os.path.join(my_tmp_dir, f'defrag-{os.path.basename(created_file)}')
+    defragment_mp4(created_file, defragmented_file)
+    created_file = defragmented_file
 
     # Move the file to the parent folder
     mime_type_escaped = re.sub(r'[^a-zA-Z0-9]', '-', self.mime_type)

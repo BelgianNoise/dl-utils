@@ -159,3 +159,17 @@ def convert_to_mkv(
     os.remove(input_file)
 
   return output_file
+
+def defragment_mp4(
+  input_file: str,
+  output_file: str,
+):
+  command = [ 'ffmpeg',
+    '-i', input_file,
+    '-c', 'copy',
+    output_file,
+  ]
+
+  logger.info(f'Defragmenting {input_file}...')
+  subprocess.run(command, check=True)
+  logger.info(f'Defragmented successfully!')

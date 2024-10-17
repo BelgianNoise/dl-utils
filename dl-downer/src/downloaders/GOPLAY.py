@@ -171,9 +171,10 @@ def GOPLAY_DL(dl_request: DLRequest):
   if len(keys) > 0:
     download_options.decrypt_keys = keys
   # ignore all periods prefixed with 'pre-roll'
-  download_options.ignore_periods = [ '^pre-roll.*' ]
+  download_options.ignore_periods = [ '^pre-roll.*', '^mid-roll.*' ]
   # merge the files per format
-  download_options.merge_method = 'format'
+  merge_method = os.getenv('DL_GOPLAY_MERGE_METHOD', 'format')
+  download_options.merge_method = merge_method
   # download the mpd
   final_file = mpd.download('./tmp', download_options)
   # move the final file to the downloads folder
