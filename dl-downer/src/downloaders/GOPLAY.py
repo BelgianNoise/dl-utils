@@ -101,7 +101,10 @@ def GOPLAY_DL(dl_request: DLRequest):
     return
   full_obj_string = re.search(r'push\((.*)\)', scr_tag.group(0))
   obj_string_match = re.search(r'playerContainer.*?children.*?(\{.*?\})\]\}\]', full_obj_string.group(1))
+  # Replace escaped quotes inside the complete json string
   obj_string = obj_string_match.group(1).replace('\\"', '"')
+  # Replace escaped quotes inside of string values
+  obj_string = obj_string.replace('\\"', '\"')
   obj = json.loads(obj_string)
 
   video_object = obj['video']
