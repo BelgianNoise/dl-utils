@@ -1,10 +1,13 @@
 import os
 import sys
+from loguru import logger
 
 def validate_server_structure():
   '''
   Check if all necessary files and folders are present in the server's directory.
   '''
+
+  logger.info('Validating server structure...')
 
   cdm = os.getenv('CDM_FILE_PATH', './cdm/cdm.wvd')
   # Make sure there is a cdm file
@@ -18,3 +21,5 @@ def validate_server_structure():
   for f in [storage_states_folder, dl_folder]:
     if not os.path.isdir(f):
       os.mkdir(f)
+  
+  logger.info('Server structure validated')
