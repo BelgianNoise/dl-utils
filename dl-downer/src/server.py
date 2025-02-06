@@ -2,9 +2,10 @@ import traceback
 from loguru import logger
 import time
 
-from .models.dl_request_platform import DLRequestPlatform
 from .models.dl_request_status import DLRequestStatus
 from .models.dl_request import DLRequest
+from .utils.download_dl_request import download_dl_request
+from .utils.validate_server_structure import validate_server_structure
 
 def start_server():
   ''' Start the server '''
@@ -14,10 +15,7 @@ def start_server():
   load_dotenv()
   logger.info('Loaded environment variables')
 
-  logger.info('Validating server structure...')
-  from .utils.validate_server_structure import validate_server_structure
   validate_server_structure()
-  logger.info('Server structure validated')
 
   from .utils.setup_db_pool import setup_db_pool
   db = setup_db_pool()
@@ -45,33 +43,10 @@ def start_server():
       # Create a DLRequest object from the database row
       dl_request = DLRequest.from_db_row(pending_request)
       dl_request.update_status(DLRequestStatus.IN_PROGRESS, db)
-      logger.info(f'Downloading {dl_request.video_page_or_manifest_url} from {dl_request.platform} ...')
-      start_time = time.time()
 
       try:
-        if dl_request.platform == DLRequestPlatform.VRTMAX.value:
-          from .downloaders.VRTMAX import VRTMAX_DL
-          VRTMAX_DL(dl_request)
-        elif dl_request.platform == DLRequestPlatform.GOPLAY.value:
-          from .downloaders.GOPLAY import GOPLAY_DL
-          GOPLAY_DL(dl_request)
-        elif dl_request.platform == DLRequestPlatform.VTMGO.value:
-          from .downloaders.VTMGO import VTMGO_DL
-          VTMGO_DL(dl_request)
-        elif dl_request.platform == DLRequestPlatform.GENERIC_MANIFEST.value:
-          from .downloaders.GENERIC_MANIFEST import GENERIC_MANIFEST_DL
-          GENERIC_MANIFEST_DL(dl_request)
-        elif dl_request.platform == DLRequestPlatform.YOUTUBE.value:
-          from .downloaders.YOUTUBE import YOUTUBE_DL
-          YOUTUBE_DL(dl_request)
-        else:
-          logger.error(f'Unsupported platform: {dl_request.platform}')
-          # throw error for now
-          raise Exception('Unsupported platform')
-      
+        download_dl_request(dl_request)
         dl_request.update_status(DLRequestStatus.COMPLETED, db)
-        duration = time.time() - start_time
-        logger.info(f'({duration:.2f}s) Downloaded {dl_request.video_page_or_manifest_url} from {dl_request.platform} successfully!')
 
       except Exception as e:
         dl_request.update_status(DLRequestStatus.FAILED, db)
