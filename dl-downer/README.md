@@ -20,7 +20,7 @@ You can also run this script from your terminal, this requires a little more set
 
 #### Steps
 1. Run `pip install --no-cache-dir -r requirements.txt` to install the required packages
-2. Run `playwright install --with-deps`
+2. Run `playwright install`
 3. Add all binaries to your PATH and make sure they are globally accessible. Find your binaries in `./binaries/windows`
 4. Test the binaries using `n-m3u8dl-re.exe -h`
 5. Set the required variables in `cli.py` (login credentials, ...)
