@@ -155,7 +155,7 @@ def GOPLAY_DL(dl_request: DLRequest):
     drm_xml = video_data['drmXml']
     logger.debug(f'DRM XML: {drm_xml}')
     manifest_response = requests.get(stream_manifest)
-    pssh = re.findall(r'<pssh[^>]*>(.{,120})</pssh>', manifest_response.text)[0]
+    pssh = re.findall(r'<cenc:pssh[^>]*>(.{,120})</cenc:pssh>', manifest_response.text)[0]
     logger.debug(f'PSSH: {pssh}')
     cdm = Local_CDM()
     challenge = cdm.generate_challenge(pssh)
