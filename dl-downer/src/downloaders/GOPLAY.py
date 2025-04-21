@@ -142,8 +142,12 @@ def GOPLAY_DL(dl_request: DLRequest):
   video_id = video_data['ssai']['videoID']
   logger.debug(f'Video ID: {video_id}')
 
+  # Get streams URL domain from environment variable or use default
+  # GOPLAY had changed this a couple times already, sometimes they proxy through doubleclick.net
+  streams_url_domain = os.getenv('GOPLAY_STREAMS_URL_DOMAIN', 'dai.google.com')
+  
   # get video streams
-  streams_resp = requests.post(f'https://pubads.g.doubleclick.net/ondemand/dash/content/{content_source_id}/vid/{video_id}/streams')
+  streams_resp = requests.post(f'https://{streams_url_domain}/ondemand/dash/content/{content_source_id}/vid/{video_id}/streams')
   streams = streams_resp.json()
   stream_manifest = streams['stream_manifest']
 
