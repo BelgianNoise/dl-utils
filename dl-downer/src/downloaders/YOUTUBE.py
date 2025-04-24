@@ -18,7 +18,8 @@ def YOUTUBE_DL(dl_request: DLRequest):
 
   if dl_request.preferred_quality_matcher:
     p = dl_request.preferred_quality_matcher
-    command.extend([ '-f', f'bv[height<={p}]+ba/b[height<={p}]' ])
+    if p != 'best':
+      command.extend([ '-f', f'bv[height<={p}]+ba/b[height<={p}]' ])
 
   filename = '%(title)s.%(ext)s'
   if dl_request.output_filename:
