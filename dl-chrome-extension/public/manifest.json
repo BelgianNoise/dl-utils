@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
-
   "name": "dl-utils",
   "description": "Queue up downloads and show the queue",
   "version": "1.0",
-  "icons": {"128": "icon.png"},
-
+  "icons": {
+    "128": "icon.png"
+  },
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -14,33 +14,37 @@
       "128": "icon.png"
     }
   },
-
   "content_scripts": [
     {
       "matches": [
         "*://*.vrt.be/vrtmax/*",
         "*://*.goplay.be/*",
         "*://*.vtmgo.be/*",
+        "*://*.streamz.be/*",
         "*://*.youtube.com/*"
       ],
-      "js": ["js/vendor.js", "js/content_script.js"],
-      "css": ["css/variables.css","css/notifications.css"]
+      "js": [
+        "js/vendor.js",
+        "js/content_script.js"
+      ],
+      "css": [
+        "css/variables.css",
+        "css/notifications.css"
+      ]
     }
   ],
-
   "background": {
     "service_worker": "js/background.js"
   },
-
   "permissions": [
     "tabs",
     "storage"
   ],
-
   "host_permissions": [
     "*://*.vrt.be/*",
     "*://*.goplay.be/*",
     "*://*.vtmgo.be/*",
+    "*://*.streamz.be/*",
     "*://*.youtube.com/*"
   ]
 }
