@@ -17,7 +17,6 @@ def handle_vtmgo_consent_popup(page):
   '''
   Handle consent popup if it appears
   '''
-
   try:
     logger.debug('Accepting cookies')
     page.wait_for_selector('div#pg-first-layer', timeout=2000)
@@ -31,7 +30,6 @@ def handle_vtmgo_consent_popup(page):
 def get_vtmgo_data(video_page_url: str):
   browser = None
   playwright = None
-
   config = None
 
   try:
@@ -90,10 +88,8 @@ def get_vtmgo_data(video_page_url: str):
 
   return config
 
-def VTMGO_DL(dl_request: DLRequest):
-  config = get_vtmgo_data(dl_request.video_page_or_manifest_url)
-
-  # find dash stream
+def extract_dash_stream_info(config) -> dict:
+  """Extract DASH stream information from config"""
   streams = config['video']['streams']
   dash_stream = None
   for stream in streams:
@@ -102,49 +98,51 @@ def VTMGO_DL(dl_request: DLRequest):
       break
   assert dash_stream, 'No dash stream found'
 
-  mpd_url = dash_stream['url']
-  license_url = dash_stream['drm']['com.widevine.alpha']['licenseUrl']
-  auth_token = dash_stream['drm']['com.widevine.alpha']['drmtoday']['authToken']
-  logger.debug(f'MPD: {mpd_url}')
-  logger.debug(f'License: {license_url}')
-  logger.debug(f'Auth token: {auth_token}')
+  return {
+    'mpd_url': dash_stream['url'],
+    'license_url': dash_stream['drm']['com.widevine.alpha']['licenseUrl'],
+    'auth_token': dash_stream['drm']['com.widevine.alpha']['drmtoday']['authToken'],
+  }
 
-  filename = None
-  if dl_request.output_filename:
-    filename = dl_request.output_filename
+def generate_filename_from_metadata(config, output_filename=None):
+  """Generate filename from metadata or use provided filename"""
+  if output_filename:
+    return output_filename
+
+  metadata = config['video']['metadata']
+  if 'episode' not in metadata:
+    # Movie
+    title = metadata['title']
+    filename = f'{title}'
   else:
-    # use metadata to generate filename
-    metadata = config['video']['metadata']
-    # check if 'episode' exists in metadata
-    if 'episode' not in metadata:
-      # Movie
-      prog = metadata['title']
-      filename = f'{prog}'
-    else:
-      # Series
-      ep = metadata['episode']['order']
-      season = metadata['episode']['season']['order']
-      prog = metadata['program']['title']
-      filename = f'{prog}.S{season:02}E{ep:02}'
-    filename = parse_filename(filename)
-  logger.debug(f'Filename: {filename}')
-  
-  # get pssh from mpd
+    # Series
+    ep = metadata['episode']['order']
+    season = metadata['episode']['season']['order']
+    title = metadata['program']['title']
+    filename = f'{title}.S{season:02}E{ep:02}'
+
+  return parse_filename(filename)
+
+def get_pssh_from_manifest(mpd_url):
+  """Extract PSSH from MPD manifest"""
   manifest_response = requests.get(mpd_url)
   manifest_response.raise_for_status()
   logger.debug(f'Manifest response status: {manifest_response.status_code}')
+
   try:
     pssh = re.findall(r'<cenc:pssh[^>]*>(.{,240})</cenc:pssh>', manifest_response.text)[0]
     assert pssh
+    return pssh
   except:
     raise Exception(f'Failed to find pssh in manifest: {manifest_response.text}')
-  logger.debug(f'PSSH: {pssh}')
 
+def get_widevine_keys(pssh, license_url, auth_token, origin_url='https://www.vtmgo.be'):
+  """Get Widevine decryption keys"""
   cdm = Local_CDM()
   challenge = cdm.generate_challenge(pssh)
   headers = {
     'user-agent': user_agent,
-    'origin': 'https://www.vtmgo.be',
+    'origin': origin_url,
     'connection': 'keep-alive',
     'accept': '*/*',
     'accept-encoding': 'gzip, deflate, br',
@@ -157,36 +155,82 @@ def VTMGO_DL(dl_request: DLRequest):
   logger.debug(f'License: {license}')
   keys = cdm.parse_license(license)
   cdm.close()
+  return keys
 
+def download_and_insert_subtitles(config, downloaded_file, preferred_lang='nl-tt'):
+  """Download and insert subtitles if available"""
+  if 'subtitles' not in config['video']:
+    return
+
+  subtitles = config['video']['subtitles']
+  subtitle = None
+
+  # Try to find preferred language subtitle
+  for sub in subtitles:
+    if sub['language'] == preferred_lang:
+      subtitle = sub
+      break
+
+  # Fall back to first subtitle if preferred not found
+  if subtitle is None and subtitles:
+    subtitle = subtitles[0]
+
+  if subtitle is None:
+    return
+
+  subtitle_url = subtitle['url']
+  logger.debug(f'Subtitle: {subtitle_url}')
+
+  # Download the subtitle and store it next to the video
+  subtitle_response = requests.get(subtitle_url)
+  subtitle_response.raise_for_status()
+  subtitle_filename = f'{downloaded_file}.vtt'
+  with open(subtitle_filename, 'wb') as f:
+    f.write(subtitle_response.content)
+  logger.debug(f'Subtitle saved to {subtitle_filename}')
+  insert_subtitle(downloaded_file, subtitle_filename)
+  os.remove(subtitle_filename)
+
+def process_dpg_media_download(config, dl_request, platform, origin_url='https://www.vtmgo.be'):
+  """
+  Common download logic for DPG Media platforms (VTMGO, STREAMZ)
+  This can be called from both VTMGO_DL and STREAMZ_DL functions
+  """
+  # Extract stream info
+  stream_info = extract_dash_stream_info(config)
+  mpd_url = stream_info['mpd_url']
+  license_url = stream_info['license_url']
+  auth_token = stream_info['auth_token']
+
+  logger.debug(f'MPD: {mpd_url}')
+  logger.debug(f'License: {license_url}')
+  logger.debug(f'Auth token: {auth_token}')
+
+  # Generate filename
+  filename = generate_filename_from_metadata(config, dl_request.output_filename)
+  logger.debug(f'Filename: {filename}')
+
+  # Get PSSH and keys
+  pssh = get_pssh_from_manifest(mpd_url)
+  logger.debug(f'PSSH: {pssh}')
+
+  # Get Widevine keys with platform-specific origin
+  keys = get_widevine_keys(pssh, license_url, auth_token, origin_url)
+
+  # Download video
   downloaded_file = download_video_nre(
     mpd_url,
     filename,
-    DLRequestPlatform.VTMGO,
+    platform,
     dl_request.preferred_quality_matcher,
     keys=keys,
   )
 
-  # find 'nl-tt' subtitle or default to first subtitle
-  if 'subtitles' in config['video']:
-    subtitles = config['video']['subtitles']
-    subtitle = None
-    for sub in subtitles:
-      if sub['language'] == 'nl-tt':
-        subtitle = sub
-        break
-    if subtitle is None:
-      subtitle = subtitles[0]
-    subtitle_url = subtitle['url']
-    logger.debug(f'Subtitle: {subtitle_url}')
+  # Handle subtitles
+  download_and_insert_subtitles(config, downloaded_file)
 
-    # download the subtitle and store it next to the video
-    subtitle_response = requests.get(subtitle_url)
-    subtitle_response.raise_for_status()
-    subtitle_filename = f'{downloaded_file}.vtt'
-    with open(subtitle_filename, 'wb') as f:
-      f.write(subtitle_response.content)
-    logger.debug(f'Subtitle saved to {subtitle_filename}')
-    insert_subtitle(downloaded_file, subtitle_filename)
-    os.remove(subtitle_filename)
+  return downloaded_file
 
-  return
+def VTMGO_DL(dl_request: DLRequest):
+  config = get_vtmgo_data(dl_request.video_page_or_manifest_url)
+  return process_dpg_media_download(config, dl_request, DLRequestPlatform.VTMGO)

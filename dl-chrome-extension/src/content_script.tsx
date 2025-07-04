@@ -4,6 +4,7 @@ import DownloadButton from "./components/download-button/download-button";
 import { MessageType } from "./types";
 import { addButtonsGoPlay } from "./page-buttons/goplay";
 import { addButtonsVTMGO } from "./page-buttons/vtmgo";
+import { addButtonsStreamz } from "./page-buttons/streamz";
 import { addButtonsVRTMAX } from "./page-buttons/vrtmax";
 
 console.log('RUNNING CONTENT SCRIPT')
@@ -43,6 +44,8 @@ function handleURLUpdated() {
     addButtonsGoPlay(url);
   } else if (url.match('vtmgo.be')) {
     addButtonsVTMGO(url);
+  } else if (url.match('streamz.be')) {
+    addButtonsStreamz(url);
   } else if (url.match(/youtube\.com\/watch/)) {
     // YOUTUBE
     addButtonYouTube();

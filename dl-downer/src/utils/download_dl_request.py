@@ -18,6 +18,9 @@ def download_dl_request(
   elif dl_request.platform == DLRequestPlatform.VTMGO.value:
     from ..downloaders.VTMGO import VTMGO_DL
     VTMGO_DL(dl_request)
+  elif dl_request.platform == DLRequestPlatform.STREAMZ.value:
+    from ..downloaders.STREAMZ import STREAMZ_DL
+    STREAMZ_DL(dl_request)
   elif dl_request.platform == DLRequestPlatform.GENERIC_MANIFEST.value:
     from ..downloaders.GENERIC_MANIFEST import GENERIC_MANIFEST_DL
     GENERIC_MANIFEST_DL(dl_request)

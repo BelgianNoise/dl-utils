@@ -1,6 +1,7 @@
 export enum DLRequestPlatform {
   VRTMAX = 'VRTMAX',
   VTMGO = 'VTMGO',
+  STREAMZ = 'STREAMZ',
   GOPLAY = 'GOPLAY',
   YOUTUBE = 'YOUTUBE',
   GENERIC_MANIFEST = 'GENERIC_MANIFEST',

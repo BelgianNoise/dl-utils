@@ -64,6 +64,8 @@ export async function postQueueAddHandler(
     downloadRequest.platform = DLRequestPlatform.VRTMAX;
   } else if (url.startsWith('https://www.vtmgo.be/vtmgo')) {
     downloadRequest.platform = DLRequestPlatform.VTMGO;
+  } else if (url.startsWith('https://www.streamz.be/streamz')) {
+    downloadRequest.platform = DLRequestPlatform.STREAMZ;
   } else if (url.startsWith('https://www.goplay.be/')) {
     downloadRequest.platform = DLRequestPlatform.GOPLAY;
   } else if (url.startsWith('https://www.youtube.com/')) {
