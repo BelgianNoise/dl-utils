@@ -8,14 +8,14 @@ export function addButtonsStreamz(url: string): void {
 
   if (url.match(/\/streamz\/afspelen\//)) {
     // Streamz
-    addButtonSteamzPlayer();
+    addButtonStreamzPlayer();
   } else if (url.match(/\/streamz\//)) {
     // Streamz overview
     addButtonStreamzOverview();
   }
 }
 
-function addButtonSteamzPlayer(): void {
+function addButtonStreamzPlayer(): void {
   const el = document.querySelector('main');
   if (!el) return;
   const newDiv = document.createElement("div");

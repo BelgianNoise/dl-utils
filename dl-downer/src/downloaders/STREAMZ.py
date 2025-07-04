@@ -1,33 +1,22 @@
 import os
-import re
 import time
-import requests
-
 from loguru import logger
 
 from ..models.dl_request import DLRequest
 from ..models.dl_request_platform import DLRequestPlatform
-from ..utils.download_video_nre import download_video_nre
-from ..utils.local_cdm import Local_CDM
-from ..utils.filename import parse_filename
-from ..utils.files import insert_subtitle
-from ..utils.browser import (
-    create_playwright_page,
-    get_storage_state_location,
-    user_agent,
-)
+from ..utils.browser import create_playwright_page, get_storage_state_location
+from .VTMGO import process_dpg_media_download
 
 
 def handle_streamz_consent_popup(page):
     """
     Handle consent popup if it appears
     """
-
     try:
         logger.debug("Accepting cookies")
         page.wait_for_selector("div.didomi-popup-container", timeout=2000)
     except:
-        logger.debug(f"No consent popup found:")
+        logger.debug("No consent popup found:")
         return
     acceptButton = page.wait_for_selector("button#didomi-notice-agree-button")
     acceptButton.click()
@@ -37,7 +26,6 @@ def handle_streamz_consent_popup(page):
 def get_streamz_data(video_page_url: str):
     browser = None
     playwright = None
-
     config = None
 
     try:
@@ -112,102 +100,9 @@ def STREAMZ_DL(dl_request: DLRequest):
     config = get_streamz_data(dl_request.video_page_or_manifest_url)
     logger.debug(f"Config: {config}")
 
-    # find dash stream
-    streams = config["video"]["streams"]
-    dash_stream = None
-    for stream in streams:
-        if stream["type"] == "dash":
-            dash_stream = stream
-            break
-    assert dash_stream, "No dash stream found"
-
-    mpd_url = dash_stream["url"]
-    license_url = dash_stream["drm"]["com.widevine.alpha"]["licenseUrl"]
-    auth_token = dash_stream["drm"]["com.widevine.alpha"]["drmtoday"]["authToken"]
-    logger.debug(f"MPD: {mpd_url}")
-    logger.debug(f"License: {license_url}")
-    logger.debug(f"Auth token: {auth_token}")
-
-    filename = None
-    if dl_request.output_filename:
-        filename = dl_request.output_filename
-    else:
-        # use metadata to generate filename
-        metadata = config["video"]["metadata"]
-        # check if 'episode' exists in metadata
-        if "episode" not in metadata:
-            # Movie
-            prog = metadata["title"]
-            filename = f"{prog}"
-        else:
-            # Series
-            ep = metadata["episode"]["order"]
-            season = metadata["episode"]["season"]["order"]
-            prog = metadata["program"]["title"]
-            filename = f"{prog}.S{season:02}E{ep:02}"
-        filename = parse_filename(filename)
-    logger.debug(f"Filename: {filename}")
-
-    # get pssh from mpd
-    manifest_response = requests.get(mpd_url)
-    manifest_response.raise_for_status()
-    logger.debug(f"Manifest response status: {manifest_response.status_code}")
-    try:
-        pssh = re.findall(
-            r"<cenc:pssh[^>]*>(.{,240})</cenc:pssh>", manifest_response.text
-        )[0]
-        assert pssh
-    except:
-        raise Exception(f"Failed to find pssh in manifest: {manifest_response.text}")
-    logger.debug(f"PSSH: {pssh}")
-
-    cdm = Local_CDM()
-    challenge = cdm.generate_challenge(pssh)
-    headers = {
-        "user-agent": user_agent,
-        "origin": "https://www.streamz.be",
-        "connection": "keep-alive",
-        "accept": "*/*",
-        "accept-encoding": "gzip, deflate, br",
-        "X-Dt-Auth-Token": auth_token,
-    }
-    license_response = requests.post(license_url, data=challenge, headers=headers)
-    license_response.raise_for_status()
-    license_response_json = license_response.json()
-    license = license_response_json["license"]
-    logger.debug(f"License: {license}")
-    keys = cdm.parse_license(license)
-    cdm.close()
-
-    downloaded_file = download_video_nre(
-        mpd_url,
-        filename,
+    return process_dpg_media_download(
+        config,
+        dl_request,
         DLRequestPlatform.STREAMZ,
-        dl_request.preferred_quality_matcher,
-        keys=keys,
+        origin_url='https://www.streamz.be'
     )
-
-    # find 'nl-tt' subtitle or default to first subtitle
-    if "subtitles" in config["video"]:
-        subtitles = config["video"]["subtitles"]
-        subtitle = None
-        for sub in subtitles:
-            if sub["language"] == "nl-tt":
-                subtitle = sub
-                break
-        if subtitle is None:
-            subtitle = subtitles[0]
-        subtitle_url = subtitle["url"]
-        logger.debug(f"Subtitle: {subtitle_url}")
-
-        # download the subtitle and store it next to the video
-        subtitle_response = requests.get(subtitle_url)
-        subtitle_response.raise_for_status()
-        subtitle_filename = f"{downloaded_file}.vtt"
-        with open(subtitle_filename, "wb") as f:
-            f.write(subtitle_response.content)
-        logger.debug(f"Subtitle saved to {subtitle_filename}")
-        insert_subtitle(downloaded_file, subtitle_filename)
-        os.remove(subtitle_filename)
-
-    return
