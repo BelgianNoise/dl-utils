@@ -6,6 +6,9 @@ os.environ["AUTH_GOPLAY_EMAIL"] = ""
 os.environ["AUTH_GOPLAY_PASSWORD"] = ""
 os.environ["AUTH_VTMGO_EMAIL"] = ""
 os.environ["AUTH_VTMGO_PASSWORD"] = ""
+os.environ["AUTH_STREAMZ_EMAIL"] = ""
+os.environ["AUTH_STREAMZ_PASSWORD"] = ""
+
 
 os.environ["CDM_FILE_PATH"] = "./cdm/cdm.wvd"
 os.environ["STORAGE_STATES_FOLDER"] = "./storage_states"
