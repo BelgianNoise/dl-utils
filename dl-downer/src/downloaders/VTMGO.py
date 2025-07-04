@@ -88,7 +88,7 @@ def get_vtmgo_data(video_page_url: str):
 
   return config
 
-def extract_dash_stream_info(config):
+def extract_dash_stream_info(config) -> dict:
   """Extract DASH stream information from config"""
   streams = config['video']['streams']
   dash_stream = None
@@ -101,7 +101,7 @@ def extract_dash_stream_info(config):
   return {
     'mpd_url': dash_stream['url'],
     'license_url': dash_stream['drm']['com.widevine.alpha']['licenseUrl'],
-    'auth_token': dash_stream['drm']['com.widevine.alpha']['drmtoday']['authToken']
+    'auth_token': dash_stream['drm']['com.widevine.alpha']['drmtoday']['authToken'],
   }
 
 def generate_filename_from_metadata(config, output_filename=None):
@@ -112,14 +112,14 @@ def generate_filename_from_metadata(config, output_filename=None):
   metadata = config['video']['metadata']
   if 'episode' not in metadata:
     # Movie
-    prog = metadata['title']
-    filename = f'{prog}'
+    title = metadata['title']
+    filename = f'{title}'
   else:
     # Series
     ep = metadata['episode']['order']
     season = metadata['episode']['season']['order']
-    prog = metadata['program']['title']
-    filename = f'{prog}.S{season:02}E{ep:02}'
+    title = metadata['program']['title']
+    filename = f'{title}.S{season:02}E{ep:02}'
 
   return parse_filename(filename)
 
