@@ -7,4 +7,6 @@ def get_platform_for_url(url: str) -> DLRequestPlatform:
     return DLRequestPlatform.GOPLAY.value
   if 'vtmgo.be' in url:
     return DLRequestPlatform.VTMGO.value
+  if 'streamz.be' in url:
+    return DLRequestPlatform.STREAMZ.value
   return DLRequestPlatform.UNKNOWN
