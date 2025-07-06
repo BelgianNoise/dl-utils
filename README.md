@@ -22,6 +22,12 @@ Currently supported content providers:
 
 Python script that monitors a database table for new download requests, if a new request is found the script does its best to download (and decrypt) the video (using a local CDM).
 
+### Troubleshooting
+
+If you encouter issues with the login for VTM GO, you might need to create a storage state by turning off `HEADLESS` mode via the env variable. (You might need to do this on another machine as non-headless might not be supported in the current environment)
+DPG Media's login is pretty good at detecting bots, but once you are logged in, they don't seem to care that much anymore.
+(Keep in mind that your refresh token will expire after a while, so you might need to repeat this process every now and then if you don't use the downloader for a while)
+
 ## [dl-queue](dl-queue/)
 
 Express.js server exposing 2 endpoints:
@@ -38,3 +44,4 @@ Currently deployed on <https://dl-queue.nasaj.be/> (GCP Cloud Run). Don't bother
 
 This chrome extension adds a download button to all supported websites, when clicked it sends a download request to the queue service.
 It also shows an overview of all the download requests in the queue, already completed or failed.
+
