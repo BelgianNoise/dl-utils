@@ -95,27 +95,18 @@ def GOPLAY_DL(dl_request: DLRequest):
   page_resp = requests.get(dl_request.video_page_or_manifest_url)
   page_content = page_resp.text
   # Find the correct script tag that contains the video data
-  scr_tag = re.search(r'<script>(?:(?!</?script>).)*playerContainer(?:(?!</?script>).)*</script>', page_content)
-  if scr_tag is None:
+  script_tag = re.search(r'<script>(?:(?!</?script>).)*playerContainer(?:(?!</?script>).)*</script>', page_content)
+  if script_tag is None:
     logger.error('No video data found')
     return
-  full_obj_string = re.search(r'push\((.*)\)', scr_tag.group(0))
-  obj_string_match = re.search(r'playerContainer.*?children.*?(\{.*?\})\]\}\]', full_obj_string.group(1))
-  # Replace escaped quotes inside the complete json string
-  obj_string = obj_string_match.group(1).replace('\\"', '"')
-  # Replace escaped quotes inside of string values
-  obj_string = obj_string.replace('\\"', '\"')
-  obj = json.loads(obj_string)
+  script_tag_str = script_tag.group(0)
 
-  video_object = obj['video']
-  # logger.debug(f'Video object: {json.dumps(video_object, indent=2)}')
-  video_uuid = video_object['uuid']
-  type_form = video_object['videoType']
-  # Transform 'longForm' to 'long-form' for the URL
+  video_uuid = re.search(r'\\"videoId\\":\\"([^"]+?)\\"', script_tag_str).group(1)
+  type_form = re.search(r'\\"videoType\\":\\"([^"]+?)\\"', script_tag_str).group(1)
   type_form = re.sub(r'([a-z])([A-Z])', r'\1-\2', type_form).lower()
-  is_drm = video_object['flags']['isDrm']
+  is_drm = re.search(r'\\"isDrm\\":(true|false)', script_tag_str).group(1) == 'true'
   if dl_request.output_filename is None:
-    title = video_object['title']
+    title = re.search(r'\\"title\\":\\"([^"]+?)\\"', script_tag_str).group(1)
     title = parse_filename(title)
   else:
     title = dl_request.output_filename
