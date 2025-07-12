@@ -181,10 +181,11 @@ class AdaptationSet:
         # replace created_file with decrypted_file
         created_file = decrypted_file
 
-    # defragment the file, just in case
-    defragmented_file = os.path.join(my_tmp_dir, f'defrag-{os.path.basename(created_file)}')
-    defragment_mp4(created_file, defragmented_file)
-    created_file = defragmented_file
+    if download_options.defragment:
+      # defragment the file, just in case
+      defragmented_file = os.path.join(my_tmp_dir, f'defrag-{os.path.basename(created_file)}')
+      defragment_mp4(created_file, defragmented_file)
+      created_file = defragmented_file
 
     # Move the file to the parent folder
     mime_type_escaped = re.sub(r'[^a-zA-Z0-9]', '-', self.mime_type)

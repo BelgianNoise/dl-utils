@@ -38,6 +38,10 @@ class MPDDownloadOptions():
     convert_to_mkv (bool):
       Whether to convert the downloaded files to MKV.
       Default is True.
+    defragment (bool):
+      Whether to defragment the downloaded MP4 files.
+      Default is True.
+      This is useful for MP4 files that are fragmented, which can cause playback issues in some players.
 
   '''
   def __init__(
@@ -49,6 +53,7 @@ class MPDDownloadOptions():
     ignore_periods: List[str] = [],
     merge_method: str = 'period',
     convert_to_mkv: bool = True,
+    defragment: bool = True,
   ):
     self.video_resolution = video_resolution
     self.audio_language = audio_language
@@ -57,6 +62,7 @@ class MPDDownloadOptions():
     self.ignore_periods = ignore_periods
     self.merge_method = merge_method
     self.convert_to_mkv = convert_to_mkv
+    self.defragment = defragment
   def __str__(self):
     return f'<MPDDownloadOptions(video_resolution={self.video_resolution}, audio_language={self.audio_language}, subtitle_language={self.subtitle_language})>'
   def __repr__(self):
