@@ -28,8 +28,8 @@ class MPD:
   @staticmethod
   def from_element(el: ET.Element) -> 'MPD':
     base_url = None
-    # look globally for BaseURL
-    base_url_el = el.find('.//BaseURL')
+    # look for BaseURL only at the top level
+    base_url_el = el.find('BaseURL')
     if base_url_el is not None:
       base_url = base_url_el.text
 
@@ -62,7 +62,7 @@ class MPD:
       logger.debug(f'No base_url found in MPD, using MPD URL as base_url')
       mpd.base_url = mpd_url
     elif not mpd.base_url.startswith('http'):
-      logger.debug(f'Base URL is relative, joining with MPD URL')
+      logger.debug(f'Base URL is relative ({mpd.base_url}), joining with MPD URL ({mpd_url})')
       mpd.base_url = urllib.parse.urljoin(mpd_url, mpd.base_url)
     else:
       logger.debug(f'Base URL is absolute, using as is')
