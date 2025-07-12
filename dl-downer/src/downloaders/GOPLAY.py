@@ -89,8 +89,68 @@ def extract_goplay_bearer_token() -> str:
   logger.debug(f'Bearer: {bearer_token}')
   return bearer_token
 
-def GOPLAY_DL(dl_request: DLRequest):
+def get_stream_manifest_and_drm_xml(type_form: str, video_uuid: str) -> tuple:
+  # get video data
+  video_data_url = f'https://api.goplay.be/web/v1/videos/{type_form}/{video_uuid}'
+  logger.debug(f'Video data URL: {video_data_url}')
+  bearer_token = extract_goplay_bearer_token()
+  video_data_resp = requests.get(
+    video_data_url,
+    headers={ 'authorization': f'Bearer {bearer_token}' },
+  )
+  if video_data_resp.status_code != 200:
+    logger.debug(video_data_resp.text)
+  video_data = video_data_resp.json()
+  drm_xml = video_data['drmXml']
 
+  # Some manifest have a field called 'manifestUrls' which contains the stream manifest URL in 'dash'
+  if 'manifestUrls' in video_data:
+    stream_manifest = video_data['manifestUrls']['dash']
+    return stream_manifest, drm_xml
+  else:
+    logger.debug('No manifestUrls found in video data, using SSAI')
+    content_source_id = video_data['ssai']['contentSourceID']
+    logger.debug(f'Content source ID: {content_source_id}')
+    video_id = video_data['ssai']['videoID']
+    logger.debug(f'Video ID: {video_id}')
+
+    # Get streams URL domain from environment variable or use default
+    # GOPLAY had changed this a couple times already, sometimes they proxy through doubleclick.net
+    streams_url_domain = os.getenv('GOPLAY_STREAMS_URL_DOMAIN', 'dai.google.com')
+    
+    # get video streams
+    streams_resp = requests.post(f'https://{streams_url_domain}/ondemand/dash/content/{content_source_id}/vid/{video_id}/streams')
+    streams = streams_resp.json()
+    stream_manifest = streams['stream_manifest']
+    return stream_manifest, drm_xml
+
+def get_drm_keys(drm_xml: str, stream_manifest: str) -> dict:
+  manifest_response = requests.get(stream_manifest)
+  pssh = re.findall(r'<cenc:pssh[^>]*>(.{,120})</cenc:pssh>', manifest_response.text)[0]
+  logger.debug(f'PSSH: {pssh}')
+  cdm = Local_CDM()
+  challenge = cdm.generate_challenge(pssh)
+  headers = { 'Customdata': drm_xml }
+  lic_res = requests.post('https://widevine.keyos.com/api/v4/getLicense', data=challenge, headers=headers)
+  lic_res.raise_for_status()
+  keys = cdm.decrypt_response(lic_res.content)
+  return keys
+
+def get_stream_manifest_and_keys(type_form: str, video_uuid: str, is_drm: bool) -> tuple:
+  stream_manifest = ''
+  keys = {}
+
+  stream_manifest, drm_xml = get_stream_manifest_and_drm_xml(type_form, video_uuid)
+  logger.debug(f'Stream manifest: {stream_manifest}')
+  logger.debug(f'DRM XML: {drm_xml}')
+  if is_drm:
+    keys = get_drm_keys(drm_xml, stream_manifest)
+
+  logger.debug(f'Keys: {keys}')
+  return stream_manifest, keys
+
+
+def GOPLAY_DL(dl_request: DLRequest):
   # Parse video uuid from the page
   page_resp = requests.get(dl_request.video_page_or_manifest_url)
   page_content = page_resp.text
@@ -116,49 +176,7 @@ def GOPLAY_DL(dl_request: DLRequest):
   logger.debug(f'Is DRM: {is_drm}')
   logger.debug(f'Title: {title}')
 
-  # get video data
-  video_data_url = f'https://api.goplay.be/web/v1/videos/{type_form}/{video_uuid}'
-  logger.debug(f'Video data URL: {video_data_url}')
-  bearer_token = extract_goplay_bearer_token()
-  video_data_resp = requests.get(
-    video_data_url,
-    headers={ 'authorization': f'Bearer {bearer_token}' },
-  )
-  if video_data_resp.status_code != 200:
-    logger.debug(video_data_resp.text)
-  video_data = video_data_resp.json()
-  # logger.debug(f'Video data: {json.dumps(video_data, indent=2)}')
-  content_source_id = video_data['ssai']['contentSourceID']
-  logger.debug(f'Content source ID: {content_source_id}')
-  video_id = video_data['ssai']['videoID']
-  logger.debug(f'Video ID: {video_id}')
-
-  # Get streams URL domain from environment variable or use default
-  # GOPLAY had changed this a couple times already, sometimes they proxy through doubleclick.net
-  streams_url_domain = os.getenv('GOPLAY_STREAMS_URL_DOMAIN', 'dai.google.com')
-  
-  # get video streams
-  streams_resp = requests.post(f'https://{streams_url_domain}/ondemand/dash/content/{content_source_id}/vid/{video_id}/streams')
-  streams = streams_resp.json()
-  stream_manifest = streams['stream_manifest']
-
-  logger.debug(f'Stream manifest: {stream_manifest}')
-
-  keys = {}
-
-  if is_drm:
-    drm_xml = video_data['drmXml']
-    logger.debug(f'DRM XML: {drm_xml}')
-    manifest_response = requests.get(stream_manifest)
-    pssh = re.findall(r'<cenc:pssh[^>]*>(.{,120})</cenc:pssh>', manifest_response.text)[0]
-    logger.debug(f'PSSH: {pssh}')
-    cdm = Local_CDM()
-    challenge = cdm.generate_challenge(pssh)
-    headers = { 'Customdata': drm_xml }
-    lic_res = requests.post('https://widevine.keyos.com/api/v4/getLicense', data=challenge, headers=headers)
-    lic_res.raise_for_status()
-    keys = cdm.decrypt_response(lic_res.content)
-    logger.debug(f'Keys: {keys}')
+  stream_manifest, keys = get_stream_manifest_and_keys(type_form, video_uuid, is_drm)
 
   # use own downloader cause goplay's mpd file doesn't go well with n_m3u8dl_re
   mpd = MPD.from_url(stream_manifest)
