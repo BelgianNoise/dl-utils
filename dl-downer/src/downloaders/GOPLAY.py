@@ -101,7 +101,7 @@ def get_stream_manifest_and_drm_xml(type_form: str, video_uuid: str) -> tuple:
   if video_data_resp.status_code != 200:
     logger.debug(video_data_resp.text)
   video_data = video_data_resp.json()
-  drm_xml = video_data['drmXml']
+  drm_xml = video_data['drmXml'] if 'drmXml' in video_data else ''
 
   # Some manifest have a field called 'manifestUrls' which contains the stream manifest URL in 'dash'
   if 'manifestUrls' in video_data:
@@ -144,6 +144,9 @@ def get_stream_manifest_and_keys(type_form: str, video_uuid: str, is_drm: bool) 
   logger.debug(f'Stream manifest: {stream_manifest}')
   logger.debug(f'DRM XML: {drm_xml}')
   if is_drm:
+    if not drm_xml:
+      logger.error('DRM XML is empty, cannot get keys')
+      return stream_manifest, keys
     keys = get_drm_keys(drm_xml, stream_manifest)
 
   logger.debug(f'Keys: {keys}')
