@@ -13,7 +13,6 @@ export function addButtonsVRTMAX(url: string): void {
 
   if (url.match(/\/vrtmax\/a-z\/([^\/]+\/)+/)) {
     // /vrtmax/a-z/reizen-waes/8/reizen-waes-s8a1-taiwan/
-    console.log('===============')
     addButtonVRTMAXPlayer();
   }
 }
