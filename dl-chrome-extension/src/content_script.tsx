@@ -13,10 +13,11 @@ export const notificationContainerElementId = "dl-utils-notification-container";
 const loopingIntervals: NodeJS.Timer[] = [];
 
 function clearAllIntervals() {
-  const firstElement = loopingIntervals.shift();
-  if (firstElement) {
-    clearInterval(firstElement);
-    clearAllIntervals();
+  while (loopingIntervals.length > 0) {
+    const interval = loopingIntervals.shift();
+    if (interval) {
+      clearInterval(interval);
+    }
   }
 }
 export function addLoopingInterval(fn: () => void, timeout = 1000) {
