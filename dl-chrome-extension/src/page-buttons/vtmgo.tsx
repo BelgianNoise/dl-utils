@@ -3,8 +3,6 @@ import { addDownloadIconButtonsToElements } from "./generic";
 import DownloadButton from "../components/download-button/download-button";
 import { createRoot } from "react-dom/client";
 
-// FILE STILL NEEDS WORK
-
 export function addButtonsVTMGO(url: string): void {
   if (!url.match('vtmgo.be')) return;
 

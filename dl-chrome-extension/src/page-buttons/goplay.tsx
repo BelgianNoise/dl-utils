@@ -3,6 +3,7 @@ import React from "react";
 import DownloadButton from "../components/download-button/download-button";
 import { addDownloadIconButtonsToElements } from "./generic";
 import { download } from "../components/download-button/download";
+import { addLoopingInterval } from "../content_script";
 
 const GoPlaySeriesButton = 'goplay-series-button';
 const GoPlayMovieButton = 'goplay-movie-button';
@@ -11,9 +12,10 @@ const GoPlaySeasonButton = 'goplay-season-button';
 export function addButtonsGoPlay(url: string): void {
   if (!url.match('goplay.be')) return;
 
-  setInterval(() => {
+  addLoopingInterval(() => {
     addButtonsGoPlaySwimlane();
-  }, 1000);
+  });
+
   addSeasonButton();
 
   if (url.match(/\/video\/[\w-]+?\/[\w-]+?\/[\w-]+?(#autoplay)?$/)) {

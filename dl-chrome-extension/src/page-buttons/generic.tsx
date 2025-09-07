@@ -9,6 +9,7 @@ export function addDownloadIconButtonsToElements(
   selector: string,
 ): void {
   const els = document.querySelectorAll(selector);
+  console.log(`Found ${els.length} elements for selector ${selector}`);
   // Filter out els that already have a download button
   const filteredEls = Array.from(els).filter(el => !el.querySelector(`.${GenericButton}`));
   console.log(`Attempting to add ${filteredEls.length} download buttons`);
@@ -27,12 +28,15 @@ export function addDownloadIconButton(
   newDiv.style.position = 'absolute';
   newDiv.style.top = '5px';
   newDiv.style.right = '5px';
-  newDiv.style.zIndex = '10';
+  newDiv.style.zIndex = '9999';
 
   const href = el.getAttribute('href');
   if (!href) return;
   const videoLink = href.startsWith('http') ? href : window.location.origin + href;
-  const onClick = () => {
+  const onClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.nativeEvent.stopImmediatePropagation();
     download({ url: videoLink });
   }
 

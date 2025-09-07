@@ -1,43 +1,34 @@
-import { createRoot } from "react-dom/client";
-import React from "react";
-import DownloadButton from "./components/download-button/download-button";
 import { MessageType } from "./types";
 import { addButtonsGoPlay } from "./page-buttons/goplay";
 import { addButtonsVTMGO } from "./page-buttons/vtmgo";
 import { addButtonsStreamz } from "./page-buttons/streamz";
 import { addButtonsVRTMAX } from "./page-buttons/vrtmax";
+import { addButtonYouTube } from "./page-buttons/youtube";
 
 console.log('RUNNING CONTENT SCRIPT')
 
 export const buttonElementId = "dl-utils-download-button";
 export const notificationContainerElementId = "dl-utils-notification-container";
 
-function addButtonYouTube(): void {
-  console.log('adding button to YouTube')
-  if (document.getElementById(buttonElementId)) return;
-  const el: HTMLDivElement = document.querySelector(
-    'div#above-the-fold div#title',
-  ) as HTMLDivElement;
-  if (!el) return;
-  const newDiv = document.createElement("div");
-  newDiv.id = buttonElementId;
-  el.style.display = 'flex';
-  el.style.justifyContent = 'space-between';
-  el.style.alignItems = 'center';
-  el.style.gap = '20px';
-  el.append(newDiv);
-  const root = createRoot(newDiv);
-  root.render(
-    <React.StrictMode>
-      <DownloadButton />
-    </React.StrictMode>
-  );
-  console.log('added button to YouTube')
+const loopingIntervals: NodeJS.Timer[] = [];
+
+function clearAllIntervals() {
+  const firstElement = loopingIntervals.shift();
+  if (firstElement) {
+    clearInterval(firstElement);
+    clearAllIntervals();
+  }
+}
+export function addLoopingInterval(fn: () => void, timeout = 1000) {
+  const interval = setInterval(fn, timeout);
+  loopingIntervals.push(interval);
 }
 
 function handleURLUpdated() {
   const url = window.location.href;
   console.log('URL updated:', url);
+  clearAllIntervals();
+
   if (url.match('vrt.be/vrtmax')) {
     addButtonsVRTMAX(url);
   } else if (url.match('goplay.be')) {
@@ -47,7 +38,6 @@ function handleURLUpdated() {
   } else if (url.match('streamz.be')) {
     addButtonsStreamz(url);
   } else if (url.match(/youtube\.com\/watch/)) {
-    // YOUTUBE
     addButtonYouTube();
   }
 }

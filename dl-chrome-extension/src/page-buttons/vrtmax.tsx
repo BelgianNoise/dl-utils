@@ -1,40 +1,34 @@
 import React from "react";
-import { createRoot } from "react-dom/client";
+import { addLoopingInterval } from "../content_script";
+import { addDownloadIconButtonsToElements } from "./generic";
 import DownloadButton from "../components/download-button/download-button";
+import { createRoot } from "react-dom/client";
 
-// FILE STILL NEEDS WORK
-const VRTMAXButton = 'vrtmax-dl-utils-button';
-
-export function addButtonsVRTMAX(
-  url: string,
-): void {
+export function addButtonsVRTMAX(url: string): void {
   if (!url.match('vrt.be/vrtmax')) return;
 
-  if (url.match(/\/a-z\/([\w-]+?)\/([\w-]+?)\/([\w-]+?)\/?$/)) {
-    addButtonVRTMAX();
-  } else {
-    removeButton();
+  addLoopingInterval(
+    () => addDownloadIconButtonsToElements('ul > li a[href^="/vrtmax/a-z/"]')
+  );
+
+  if (url.match(/\/vrtmax\/a-z\/([^\/]+\/)+/)) {
+    // /vrtmax/a-z/reizen-waes/8/reizen-waes-s8a1-taiwan/
+    console.log('===============')
+    addButtonVRTMAXPlayer();
   }
 }
 
-function removeButton(): void {
-  const el = document.getElementById(VRTMAXButton);
-  if (el) el.remove();
-}
-
-function addButtonVRTMAX(): void {
-  console.log('adding button to VRT MAX')
-  if (document.getElementById(VRTMAXButton)) return;
-  const el = document.querySelector('sso-login');
-  if (!el) return;
+function addButtonVRTMAXPlayer(): void {
+  console.log('adding button to VRTMAX')
+  const player = document.querySelector('section[aria-label="Mediaspeler"]');
+  if (!player) return;
   const newDiv = document.createElement("div");
-  newDiv.id = VRTMAXButton;
-  el.parentNode!.insertBefore(newDiv, el);
+  player.parentNode!.insertBefore(newDiv, player);
   const root = createRoot(newDiv);
   root.render(
     <React.StrictMode>
       <DownloadButton />
     </React.StrictMode>
   );
-  console.log('added button to VRT MAX')
+  console.log('added button to VRTMAX')
 }
