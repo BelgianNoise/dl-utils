@@ -1,6 +1,4 @@
-# Use an official Python runtime as the base image
-# Using Ubuntu-based image (jammy) instead of Debian for Playwright compatibility
-FROM python:3.12-slim-jammy
+FROM mcr.microsoft.com/playwright/python:v1.42.0-jammy
 
 LABEL org.opencontainers.image.source https://github.com/BelgianNoise/dl-utils
 
