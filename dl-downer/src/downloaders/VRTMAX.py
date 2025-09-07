@@ -58,14 +58,17 @@ def extract_vrt_cookies():
     page.goto("https://www.vrt.be/vrtmax/", wait_until='networkidle')
     handle_vrt_consent_popup(page)
 
+    wait_for_logged_in_selector = 'header button[aria-label^="Profielmenu:"]:not([aria-label="Profielmenu: Aanmelden"])'
+    wait_for_logged_out_selector = 'header button[aria-label="Profielmenu: Aanmelden"]'
+
     try:
-      page.wait_for_selector('sso-login .loggedIn', timeout=2000)
+      page.wait_for_selector(wait_for_logged_in_selector, timeout=5000)
       logger.debug('Already logged in')
       cookies = page.context.cookies()
       page.context.storage_state(path=get_storage_state_location(DLRequestPlatform.VRTMAX))
     except:
       logger.debug('Logging in ...')
-      loginButton = page.wait_for_selector('sso-login .loggedOut')
+      loginButton = page.wait_for_selector(wait_for_logged_out_selector, timeout=10000)
       loginButton.click()
       emailInput = page.wait_for_selector('input#email-id-email')
       assert os.getenv('AUTH_VRTMAX_EMAIL'), 'AUTH_VRTMAX_EMAIL not set'
@@ -76,7 +79,7 @@ def extract_vrt_cookies():
       submitButton = page.wait_for_selector('form button[type="submit"]')
       submitButton.click()
 
-      page.wait_for_selector('sso-login .loggedIn', timeout=10000)
+      page.wait_for_selector(wait_for_logged_in_selector, timeout=10000)
       logger.debug('Logged in successfully')
       cookies = page.context.cookies()
       page.context.storage_state(path=get_storage_state_location(DLRequestPlatform.VRTMAX))
