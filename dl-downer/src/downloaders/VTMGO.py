@@ -58,6 +58,15 @@ def get_vtmgo_data(video_page_url: str):
       submitButton = page.wait_for_selector('form button[type="submit"]')
       submitButton.click()
 
+      # There might be a profile selection screen, if not, skip it
+      try:
+        page.wait_for_selector('div.profile button.profile__link', timeout=5000)
+      except:
+        logger.debug('No profile selection screen detected, continuing ...')
+      else:
+        profileButton = page.wait_for_selector('div.profile button.profile__link')
+        profileButton.click()
+
       page.wait_for_selector('li.nav__item--userdropdown', timeout=200000000)
       logger.debug('Logged in successfully')
       page.context.storage_state(path=get_storage_state_location(DLRequestPlatform.VTMGO))
