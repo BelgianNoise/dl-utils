@@ -32,5 +32,5 @@ function addButtonStreamzPlayer(): void {
 }
 
 function addButtonStreamzOverview(): void {
-  addDownloadIconButtonsToElements('.block-list .list__item a.media__figure-link');
+  addDownloadIconButtonsToElements('div.mediav3 a[href*="/streamz/afspelen/"].mediav3__figure-link');
 }

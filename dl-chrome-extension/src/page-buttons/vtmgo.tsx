@@ -32,5 +32,5 @@ function addButtonVTMGOPlayer(): void {
 }
 
 function addButtonVTMGOOverview(): void {
-  addDownloadIconButtonsToElements('.block-list .list__item a.media__figure-link');
+  addDownloadIconButtonsToElements('div.mediav3 a[href*="/vtmgo/afspelen/"].mediav3__figure-link');
 }
