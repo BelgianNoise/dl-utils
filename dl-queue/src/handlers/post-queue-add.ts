@@ -66,7 +66,7 @@ export async function postQueueAddHandler(
     downloadRequest.platform = DLRequestPlatform.VTMGO;
   } else if (url.startsWith('https://www.streamz.be/streamz')) {
     downloadRequest.platform = DLRequestPlatform.STREAMZ;
-  } else if (url.startsWith('https://www.goplay.be/')) {
+  } else if (url.startsWith('https://www.goplay.be/') || url.startsWith('https://www.play.tv/')) {
     downloadRequest.platform = DLRequestPlatform.GOPLAY;
   } else if (url.startsWith('https://www.youtube.com/')) {
     downloadRequest.platform = DLRequestPlatform.YOUTUBE;
