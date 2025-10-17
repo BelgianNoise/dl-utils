@@ -19,6 +19,7 @@
       "matches": [
         "*://*.vrt.be/vrtmax/*",
         "*://*.goplay.be/*",
+        "*://*.play.tv/*",
         "*://*.vtmgo.be/*",
         "*://*.streamz.be/*",
         "*://*.youtube.com/*"

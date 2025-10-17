@@ -32,7 +32,7 @@ function handleURLUpdated() {
 
   if (url.match('vrt.be/vrtmax')) {
     addButtonsVRTMAX(url);
-  } else if (url.match('goplay.be')) {
+  } else if (url.match('goplay.be') || url.match('play.tv')) {
     addButtonsGoPlay(url);
   } else if (url.match('vtmgo.be')) {
     addButtonsVTMGO(url);

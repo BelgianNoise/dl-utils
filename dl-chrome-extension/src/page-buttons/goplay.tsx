@@ -10,7 +10,7 @@ const GoPlayMovieButton = 'goplay-movie-button';
 const GoPlaySeasonButton = 'goplay-season-button';
 
 export function addButtonsGoPlay(url: string): void {
-  if (!url.match('goplay.be')) return;
+  if (!url.match('goplay.be') && !url.match('play.tv')) return;
 
   addLoopingInterval(() => {
     addButtonsGoPlaySwimlane();
