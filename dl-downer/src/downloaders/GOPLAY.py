@@ -45,7 +45,7 @@ def extract_goplay_bearer_token() -> str:
     assert os.getenv('AUTH_GOPLAY_PASSWORD'), 'AUTH_GOPLAY_PASSWORD not set'
     playwright, browser, page = create_playwright_page(DLRequestPlatform.GOPLAY)
 
-    page.goto("https://www.goplay.be/profiel", wait_until='networkidle')
+    page.goto("https://www.play.tv/profiel", wait_until='networkidle')
     handle_goplay_consent_popup(page)
 
     try:
@@ -65,8 +65,8 @@ def extract_goplay_bearer_token() -> str:
       submitButton = page.wait_for_selector('form:has(input#login-form-email) button')
       submitButton.click()
 
-      page.wait_for_selector('aside a[href="/"] svg')
-      page.goto("https://www.goplay.be/profiel", wait_until='networkidle')
+      page.wait_for_selector('button#button-my-list')
+      page.goto("https://www.play.tv/profiel", wait_until='networkidle')
       assert os.getenv('AUTH_GOPLAY_EMAIL') in page.content(), 'Login failed'
       logger.debug('Logged in successfully')
       page.context.storage_state(path=state_file)
@@ -82,7 +82,7 @@ def extract_goplay_bearer_token() -> str:
     state = json.load(f)
     # logger.debug(f'browser state: {json.dumps(state, indent=2)}')
     for cookie in state['cookies']:
-      if cookie['domain'] == 'www.goplay.be':
+      if cookie['domain'] == 'www.play.tv':
         if cookie['name'].endswith('idToken'):
           bearer_token = cookie['value']
           break
@@ -91,7 +91,7 @@ def extract_goplay_bearer_token() -> str:
 
 def get_stream_manifest_and_drm_xml(type_form: str, video_uuid: str) -> tuple:
   # get video data
-  video_data_url = f'https://api.goplay.be/web/v1/videos/{type_form}/{video_uuid}'
+  video_data_url = f'https://api.play.tv/web/v1/videos/{type_form}/{video_uuid}'
   logger.debug(f'Video data URL: {video_data_url}')
   bearer_token = extract_goplay_bearer_token()
   video_data_resp = requests.get(
