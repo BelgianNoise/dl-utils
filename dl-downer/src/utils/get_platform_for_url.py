@@ -5,6 +5,8 @@ def get_platform_for_url(url: str) -> DLRequestPlatform:
     return DLRequestPlatform.VRTMAX.value
   if 'goplay.be' in url:
     return DLRequestPlatform.GOPLAY.value
+  if 'play.tv' in url:
+    return DLRequestPlatform.GOPLAY.value
   if 'vtmgo.be' in url:
     return DLRequestPlatform.VTMGO.value
   if 'streamz.be' in url:
