@@ -10,9 +10,10 @@ from loguru import logger
 from ..mpd.mpd import MPD
 from ..mpd.mpd_download_options import MPDDownloadOptions
 from ..utils.browser import create_playwright_page, get_storage_state_location
-from ..utils.download_video_nre import download_video_nre
+from ..utils.download_video_nre import download_subs_nre
 from ..utils.local_cdm import Local_CDM
 from ..utils.filename import parse_filename
+from ..utils.files import insert_subtitle
 from ..models.dl_request_platform import DLRequestPlatform
 from ..models.dl_request import DLRequest
 
@@ -205,3 +206,19 @@ def GOPLAY_DL(dl_request: DLRequest):
   shutil.copy(final_file, final_file_move_to)
   os.remove(final_file)
   logger.debug(f'Downloaded {title} to {final_file_move_to}')
+
+    # Attempt to download subtitles if any
+  downloaded_subs = download_subs_nre(
+    mpd_url=stream_manifest,
+    filename=title,
+    platform=DLRequestPlatform.GOPLAY,
+    keys=keys,
+  )
+  # if downloaded subs, insert them into the video file and remove them
+  for sub in downloaded_subs:
+    insert_subtitle(
+      input_file=final_file_move_to,
+      subtitle_file=sub,
+    )
+    os.remove(sub)
+    

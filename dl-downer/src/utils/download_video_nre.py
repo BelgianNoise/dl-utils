@@ -1,5 +1,6 @@
 import os
 import subprocess
+from typing import List
 from loguru import logger
 
 from ..models.dl_request_platform import DLRequestPlatform
@@ -59,3 +60,59 @@ def download_video_nre(
   logger.info(f'Finished downloading {filename}')
 
   return f'{save_dir}/{filename}.mkv'
+
+def download_subs_nre(
+  mpd_url: str,
+  filename: str,
+  platform: DLRequestPlatform,
+  keys={},
+  select_subtitle: str = 'all',
+  sub_format: str = 'SRT',
+  extra_args: list = [],
+) -> List[str]:
+  command = ['n-m3u8dl-re']
+  
+  # Add decryption keys if provided
+  for kid, key in keys.items():
+    command.append('--key')
+    command.append(f'{kid}:{key}')
+
+  save_dir = os.getenv('DOWNLOADS_FOLDER', './downloads')
+  if not save_dir.endswith('/'):
+    save_dir += '/'
+  save_dir += platform.value
+
+  # Configure subtitle-specific options
+  command.extend([
+    '--sub-only',  # Download only subtitles
+    '--select-subtitle', select_subtitle,
+    '--sub-format', sub_format,
+    '--auto-subtitle-fix',  # Automatically fix subtitle timing issues
+    '--concurrent-download',
+    '--no-log',
+    '--tmp-dir', f'./tmp/{platform.value}',
+    '--save-dir', save_dir,
+    '--save-name', filename,
+    mpd_url
+  ])
+  
+  command.extend(extra_args)
+
+  logger.debug(f'Calling binary for subtitles ... {command}')
+  subprocess.run(command)
+
+  logger.info(f'Finished downloading subtitles for {filename}')
+
+  # Find all subtitle files that were created
+  # n-m3u8dl-re typically creates files with patterns like filename_lang.srt
+  subtitle_files = []
+  for file in os.listdir(save_dir):
+    if file.startswith(filename) and file.lower().endswith(('.srt', '.vtt')):
+      subtitle_files.append(os.path.join(save_dir, file))
+  
+  if not subtitle_files:
+    logger.warning(f'No subtitle files found for {filename}')
+  else:
+    logger.info(f'Found {len(subtitle_files)} subtitle files: {subtitle_files}')
+
+  return subtitle_files
