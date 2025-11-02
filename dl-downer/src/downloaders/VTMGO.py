@@ -125,7 +125,8 @@ def generate_filename_from_metadata(config, output_filename=None):
     filename = f'{title}'
   else:
     # Series
-    ep = metadata['episode']['order']
+    ep_order = metadata['episode'].get('order')
+    ep = ep_order if ep_order is not None else 0
     season = metadata['episode']['season']['order']
     title = metadata['program']['title']
     filename = f'{title}.S{season:02}E{ep:02}'
