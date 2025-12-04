@@ -38,6 +38,12 @@ def create_playwright_page(platform: DLRequestPlatform) -> tuple[Playwright, Bro
   :return: a tuple containing the browser and page objects
   '''
 
+  # playerwright.stop() cleans up the full /tmp folder
+  # if it doesnt exist, create it
+  if not os.path.exists('/tmp'):
+    logger.debug('/tmp does not exist, creating it')
+    os.makedirs('/tmp', exist_ok=True)
+
   browser = playwright.chromium.launch(
     headless=os.getenv('HEADLESS', 'true') == 'true',
     slow_mo=200,
