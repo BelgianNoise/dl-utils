@@ -1,9 +1,9 @@
 import os
 from loguru import logger
 
-from playwright.async_api import async_playwright
-from playwright.async_api import Browser, Page, Playwright
-from playwright_stealth import stealth_async
+from playwright.sync_api import sync_playwright
+from playwright.sync_api import Browser, Page, Playwright
+from playwright_stealth import stealth_sync
 
 from ..models.dl_request_platform import DLRequestPlatform
 
@@ -30,24 +30,24 @@ def get_storage_state_location(platform: DLRequestPlatform) -> str:
 
   return p
 
-async def create_playwright_page(platform: DLRequestPlatform) -> tuple[Playwright, Browser, Page]:
+def create_playwright_page(platform: DLRequestPlatform) -> tuple[Playwright, Browser, Page]:
   '''
   Create a playwright browser and page with the correct state for the given platform.
   
-  :return: a tuple containing the playwright instance, browser, and page objects
+  :return: a tuple containing the browser and page objects
   '''
 
-  playwright = await async_playwright().start()
-  browser = await playwright.chromium.launch(
+  playwright = sync_playwright().start()
+  browser = playwright.chromium.launch(
     headless=os.getenv('HEADLESS', 'true') == 'true',
     slow_mo=200,
   )
-  custom_context = await browser.new_context(
+  custom_context = browser.new_context(
     user_agent=user_agent,
     locale='nl-BE',
     storage_state=get_storage_state_location(platform),
   )
-  page = await custom_context.new_page()
-  await stealth_async(page)
+  page = custom_context.new_page()
+  stealth_sync(page)
 
   return (playwright, browser, page)

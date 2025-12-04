@@ -1,4 +1,3 @@
-import asyncio
 import json
 import re
 import os
@@ -18,21 +17,21 @@ from ..utils.files import insert_subtitle
 from ..models.dl_request_platform import DLRequestPlatform
 from ..models.dl_request import DLRequest
 
-async def handle_goplay_consent_popup(page):
+def handle_goplay_consent_popup(page):
   '''
   Handle consent popup if it appears
   '''
   try:
     logger.debug('Accepting cookies')
-    await page.wait_for_selector('#didomi-popup', timeout=2000)
+    page.wait_for_selector('#didomi-popup', timeout=2000)
   except:
     logger.debug(f'No consent popup found:')
     return
-  acceptButton = await page.wait_for_selector('button#didomi-notice-agree-button')
-  await acceptButton.click()
+  acceptButton = page.wait_for_selector('button#didomi-notice-agree-button')
+  acceptButton.click()
   logger.debug('Cookies accepted')
 
-async def extract_goplay_bearer_token() -> str:
+def extract_goplay_bearer_token() -> str:
   '''
   Get bearer token from a headless browser performing a real login
   '''
@@ -45,39 +44,39 @@ async def extract_goplay_bearer_token() -> str:
   try:
     assert os.getenv('AUTH_GOPLAY_EMAIL'), 'AUTH_GOPLAY_EMAIL not set'
     assert os.getenv('AUTH_GOPLAY_PASSWORD'), 'AUTH_GOPLAY_PASSWORD not set'
-    playwright, browser, page = await create_playwright_page(DLRequestPlatform.GOPLAY)
+    playwright, browser, page = create_playwright_page(DLRequestPlatform.GOPLAY)
 
-    await page.goto("https://www.play.tv/profiel", wait_until='networkidle')
-    await handle_goplay_consent_popup(page)
+    page.goto("https://www.play.tv/profiel", wait_until='networkidle')
+    handle_goplay_consent_popup(page)
 
     try:
       # Find the email on the page to check if we're already logged in
-      assert os.getenv('AUTH_GOPLAY_EMAIL') in await page.content(), 'Not logged in'
+      assert os.getenv('AUTH_GOPLAY_EMAIL') in page.content(), 'Not logged in'
       logger.debug('Already logged in')
-      await page.context.storage_state(path=state_file)
+      page.context.storage_state(path=state_file)
     except:
       logger.debug('Logging in ...')
       # This used to be a popup, but now it's a link
-      openLogin = await page.wait_for_selector('a[href="/login"]')
-      await openLogin.click()
-      emailInput = await page.wait_for_selector('input#login-form-email')
-      await emailInput.type(os.getenv('AUTH_GOPLAY_EMAIL'))
-      passwordInput = await page.wait_for_selector('input#login-form-password')
-      await passwordInput.type(os.getenv('AUTH_GOPLAY_PASSWORD'))
-      submitButton = await page.wait_for_selector('form:has(input#login-form-email) button')
-      await submitButton.click()
+      openLogin = page.wait_for_selector('a[href="/login"]')
+      openLogin.click()
+      emailInput = page.wait_for_selector('input#login-form-email')
+      emailInput.type(os.getenv('AUTH_GOPLAY_EMAIL'))
+      passwordInput = page.wait_for_selector('input#login-form-password')
+      passwordInput.type(os.getenv('AUTH_GOPLAY_PASSWORD'))
+      submitButton = page.wait_for_selector('form:has(input#login-form-email) button')
+      submitButton.click()
 
-      await page.wait_for_selector('button#button-my-list')
-      await page.goto("https://www.play.tv/profiel", wait_until='networkidle')
-      assert os.getenv('AUTH_GOPLAY_EMAIL') in await page.content(), 'Login failed'
+      page.wait_for_selector('button#button-my-list')
+      page.goto("https://www.play.tv/profiel", wait_until='networkidle')
+      assert os.getenv('AUTH_GOPLAY_EMAIL') in page.content(), 'Login failed'
       logger.debug('Logged in successfully')
-      await page.context.storage_state(path=state_file)
+      page.context.storage_state(path=state_file)
 
   finally:
     if browser is not None:
-      await browser.close()
+      browser.close()
     if playwright is not None:
-      await playwright.stop()
+      playwright.stop()
 
   # read idToken from state file
   with open(state_file, 'r') as f:
@@ -95,7 +94,7 @@ def get_stream_manifest_and_drm_xml(type_form: str, video_uuid: str) -> tuple:
   # get video data
   video_data_url = f'https://api.play.tv/web/v1/videos/{type_form}/{video_uuid}'
   logger.debug(f'Video data URL: {video_data_url}')
-  bearer_token = asyncio.run(extract_goplay_bearer_token())
+  bearer_token = extract_goplay_bearer_token()
   video_data_resp = requests.get(
     video_data_url,
     headers={ 'authorization': f'Bearer {bearer_token}' },

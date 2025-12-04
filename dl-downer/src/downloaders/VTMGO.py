@@ -1,6 +1,6 @@
-import asyncio
 import os
 import re
+import time
 import requests
 
 from loguru import logger
@@ -13,63 +13,63 @@ from ..utils.filename import parse_filename
 from ..utils.files import insert_subtitle
 from ..utils.browser import create_playwright_page, get_storage_state_location, user_agent
 
-async def handle_vtmgo_consent_popup(page):
+def handle_vtmgo_consent_popup(page):
   '''
   Handle consent popup if it appears
   '''
   try:
     logger.debug('Accepting cookies')
-    await page.wait_for_selector('div#pg-first-layer', timeout=2000)
+    page.wait_for_selector('div#pg-first-layer', timeout=2000)
   except:
     logger.debug(f'No consent popup found:')
     return
-  acceptButton = await page.wait_for_selector('button#pg-accept-btn')
-  await acceptButton.click()
+  acceptButton = page.wait_for_selector('button#pg-accept-btn')
+  acceptButton.click()
   logger.debug('Cookies accepted')
 
-async def get_vtmgo_data(video_page_url: str):
+def get_vtmgo_data(video_page_url: str):
   browser = None
   playwright = None
   config = None
 
   try:
-    playwright, browser, page = await create_playwright_page(DLRequestPlatform.VTMGO)
+    playwright, browser, page = create_playwright_page(DLRequestPlatform.VTMGO)
 
-    await page.goto("https://www.vtmgo.be/vtmgo", wait_until='networkidle')
-    await handle_vtmgo_consent_popup(page)
+    page.goto("https://www.vtmgo.be/vtmgo", wait_until='networkidle')
+    handle_vtmgo_consent_popup(page)
 
     try:
-      await page.wait_for_selector('li.nav__item--userdropdown', timeout=2000)
+      page.wait_for_selector('li.nav__item--userdropdown', timeout=2000)
       logger.debug('Already logged in')
-      await page.context.storage_state(path=get_storage_state_location(DLRequestPlatform.VTMGO))
+      page.context.storage_state(path=get_storage_state_location(DLRequestPlatform.VTMGO))
     except:
       logger.debug('Logging in ...')
-      await page.goto('https://www.vtmgo.be/vtmgo/aanmelden', wait_until='networkidle')
+      page.goto('https://www.vtmgo.be/vtmgo/aanmelden', wait_until='networkidle')
 
-      emailInput = await page.wait_for_selector('input#username')
+      emailInput = page.wait_for_selector('input#username')
       assert os.getenv('AUTH_VTMGO_EMAIL'), 'AUTH_VTMGO_EMAIL not set'
-      await emailInput.type(os.getenv('AUTH_VTMGO_EMAIL'))
-      submitButton = await page.wait_for_selector('form button[type="submit"]')
-      await submitButton.click()
+      emailInput.type(os.getenv('AUTH_VTMGO_EMAIL'))
+      submitButton = page.wait_for_selector('form button[type="submit"]')
+      submitButton.click()
 
-      passwordInput = await page.wait_for_selector('input#password')
+      passwordInput = page.wait_for_selector('input#password')
       assert os.getenv('AUTH_VTMGO_PASSWORD'), 'AUTH_VTMGO_PASSWORD not set'
-      await passwordInput.type(os.getenv('AUTH_VTMGO_PASSWORD'))
-      submitButton = await page.wait_for_selector('form button[type="submit"]')
-      await submitButton.click()
+      passwordInput.type(os.getenv('AUTH_VTMGO_PASSWORD'))
+      submitButton = page.wait_for_selector('form button[type="submit"]')
+      submitButton.click()
 
       # There might be a profile selection screen, if not, skip it
       try:
-        await page.wait_for_selector('div.profile button.profile__link', timeout=5000)
+        page.wait_for_selector('div.profile button.profile__link', timeout=5000)
       except:
         logger.debug('No profile selection screen detected, continuing ...')
       else:
-        profileButton = await page.wait_for_selector('div.profile button.profile__link')
-        await profileButton.click()
+        profileButton = page.wait_for_selector('div.profile button.profile__link')
+        profileButton.click()
 
-      await page.wait_for_selector('li.nav__item--userdropdown', timeout=200000000)
+      page.wait_for_selector('li.nav__item--userdropdown', timeout=200000000)
       logger.debug('Logged in successfully')
-      await page.context.storage_state(path=get_storage_state_location(DLRequestPlatform.VTMGO))
+      page.context.storage_state(path=get_storage_state_location(DLRequestPlatform.VTMGO))
 
     config_response = None
     max_wait = 10
@@ -83,17 +83,17 @@ async def get_vtmgo_data(video_page_url: str):
         if 'https://videoplayer-service.dpgmedia.net/play-config/' in response.url:
           config_response = response
       page.on('response', handle_response)
-      await page.goto(video_page_url, wait_until='load')
-      await asyncio.sleep(4)
+      page.goto(video_page_url, wait_until='load')
+      time.sleep(4)
 
     logger.debug('Got config response')
-    config = await config_response.json()
+    config = config_response.json()
 
   finally:
     if browser is not None:
-      await browser.close()
+      browser.close()
     if playwright is not None:
-      await playwright.stop()
+      playwright.stop()
 
   return config
 
@@ -242,5 +242,5 @@ def process_dpg_media_download(config, dl_request, platform, origin_url='https:/
   return downloaded_file
 
 def VTMGO_DL(dl_request: DLRequest):
-  config = asyncio.run(get_vtmgo_data(dl_request.video_page_or_manifest_url))
+  config = get_vtmgo_data(dl_request.video_page_or_manifest_url)
   return process_dpg_media_download(config, dl_request, DLRequestPlatform.VTMGO)
