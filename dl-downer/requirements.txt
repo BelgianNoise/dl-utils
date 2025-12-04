@@ -8,3 +8,4 @@ setuptools
 python-dotenv
 psycopg2-binary
 yt-dlp
+nest_asyncio
