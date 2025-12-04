@@ -39,12 +39,11 @@ def extract_goplay_bearer_token() -> str:
   state_file = get_storage_state_location(DLRequestPlatform.GOPLAY)
 
   browser = None
-  playwright = None
 
   try:
     assert os.getenv('AUTH_GOPLAY_EMAIL'), 'AUTH_GOPLAY_EMAIL not set'
     assert os.getenv('AUTH_GOPLAY_PASSWORD'), 'AUTH_GOPLAY_PASSWORD not set'
-    playwright, browser, page = create_playwright_page(DLRequestPlatform.GOPLAY)
+    browser, page = create_playwright_page(DLRequestPlatform.GOPLAY)
 
     page.goto("https://www.play.tv/profiel", wait_until='networkidle')
     handle_goplay_consent_popup(page)
@@ -75,8 +74,6 @@ def extract_goplay_bearer_token() -> str:
   finally:
     if browser is not None:
       browser.close()
-    if playwright is not None:
-      playwright.stop()
 
   # read idToken from state file
   with open(state_file, 'r') as f:
