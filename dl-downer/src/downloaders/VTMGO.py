@@ -29,11 +29,10 @@ def handle_vtmgo_consent_popup(page):
 
 def get_vtmgo_data(video_page_url: str):
   browser = None
-  playwright = None
   config = None
 
   try:
-    playwright, browser, page = create_playwright_page(DLRequestPlatform.VTMGO)
+    browser, page = create_playwright_page(DLRequestPlatform.VTMGO)
 
     page.goto("https://www.vtmgo.be/vtmgo", wait_until='networkidle')
     handle_vtmgo_consent_popup(page)
@@ -92,8 +91,6 @@ def get_vtmgo_data(video_page_url: str):
   finally:
     if browser is not None:
       browser.close()
-    if playwright is not None:
-      playwright.stop()
 
   return config
 
