@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import hashlib
 import hmac
@@ -26,23 +27,23 @@ headers = {
   'x-vrt-client-name': 'WEB',
 }
 
-def handle_vrt_consent_popup(page):
+async def handle_vrt_consent_popup(page):
   '''
   Handle consent popup if it appears
   '''
 
   try:
     logger.debug('Accepting cookies')
-    page.wait_for_selector('iframe[src*="consent"]', timeout=2000)
+    await page.wait_for_selector('iframe[src*="consent"]', timeout=2000)
   except:
     logger.debug(f'No consent popup found:')
     return
   frame = page.frame_locator('iframe[src*="consent"]')
   acceptButton = frame.get_by_text('Alles accepteren')
-  acceptButton.click()
+  await acceptButton.click()
   logger.debug('Cookies accepted')
 
-def extract_vrt_cookies():
+async def extract_vrt_cookies():
   '''
   Get cookies from a headless browser performing a real login
 
@@ -53,42 +54,42 @@ def extract_vrt_cookies():
   playwright = None
 
   try:
-    playwright, browser, page = create_playwright_page(DLRequestPlatform.VRTMAX)
+    playwright, browser, page = await create_playwright_page(DLRequestPlatform.VRTMAX)
 
-    page.goto("https://www.vrt.be/vrtmax/", wait_until='networkidle')
-    handle_vrt_consent_popup(page)
+    await page.goto("https://www.vrt.be/vrtmax/", wait_until='networkidle')
+    await handle_vrt_consent_popup(page)
 
     wait_for_logged_in_selector = 'header button[aria-label^="Profielmenu:"]:not([aria-label="Profielmenu: Aanmelden"])'
     wait_for_logged_out_selector = 'header button[aria-label="Profielmenu: Aanmelden"]'
 
     try:
-      page.wait_for_selector(wait_for_logged_in_selector, timeout=5000)
+      await page.wait_for_selector(wait_for_logged_in_selector, timeout=5000)
       logger.debug('Already logged in')
-      cookies = page.context.cookies()
-      page.context.storage_state(path=get_storage_state_location(DLRequestPlatform.VRTMAX))
+      cookies = await page.context.cookies()
+      await page.context.storage_state(path=get_storage_state_location(DLRequestPlatform.VRTMAX))
     except:
       logger.debug('Logging in ...')
-      loginButton = page.wait_for_selector(wait_for_logged_out_selector, timeout=10000)
-      loginButton.click()
-      emailInput = page.wait_for_selector('input#email-id-email')
+      loginButton = await page.wait_for_selector(wait_for_logged_out_selector, timeout=10000)
+      await loginButton.click()
+      emailInput = await page.wait_for_selector('input#email-id-email')
       assert os.getenv('AUTH_VRTMAX_EMAIL'), 'AUTH_VRTMAX_EMAIL not set'
-      emailInput.type(os.getenv('AUTH_VRTMAX_EMAIL'))
-      passwordInput = page.wait_for_selector('input#password-id-password')
+      await emailInput.type(os.getenv('AUTH_VRTMAX_EMAIL'))
+      passwordInput = await page.wait_for_selector('input#password-id-password')
       assert os.getenv('AUTH_VRTMAX_PASSWORD'), 'AUTH_VRTMAX_PASSWORD not set'
-      passwordInput.type(os.getenv('AUTH_VRTMAX_PASSWORD'))
-      submitButton = page.wait_for_selector('form button[type="submit"]')
-      submitButton.click()
+      await passwordInput.type(os.getenv('AUTH_VRTMAX_PASSWORD'))
+      submitButton = await page.wait_for_selector('form button[type="submit"]')
+      await submitButton.click()
 
-      page.wait_for_selector(wait_for_logged_in_selector, timeout=10000)
+      await page.wait_for_selector(wait_for_logged_in_selector, timeout=10000)
       logger.debug('Logged in successfully')
-      cookies = page.context.cookies()
-      page.context.storage_state(path=get_storage_state_location(DLRequestPlatform.VRTMAX))
+      cookies = await page.context.cookies()
+      await page.context.storage_state(path=get_storage_state_location(DLRequestPlatform.VRTMAX))
 
   finally:
     if browser is not None:
-      browser.close()
+      await browser.close()
     if playwright is not None:
-      playwright.stop()
+      await playwright.stop()
 
   # get cookie named 'vrtnu-site_profile_vt'
   vrt_token = next(c['value'] for c in cookies if c['name'] == 'vrtnu-site_profile_vt')
@@ -249,7 +250,7 @@ def VRTMAX_DL(dl_request: DLRequest):
   url_path = urlparse(url).path.rstrip('/')
 
   # Get VRT cookies
-  cookies, vrt_token = extract_vrt_cookies()
+  cookies, vrt_token = asyncio.run(extract_vrt_cookies())
   # Transform List[Cookies] into RequestsCookieJar
   cookies = requests.utils.cookiejar_from_dict({c['name']:c['value'] for c in cookies})
 
