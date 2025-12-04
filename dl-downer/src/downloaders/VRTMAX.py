@@ -50,9 +50,10 @@ def extract_vrt_cookies():
   '''
 
   browser = None
+  playwright = None
 
   try:
-    browser, page = create_playwright_page(DLRequestPlatform.VRTMAX)
+    playwright, browser, page = create_playwright_page(DLRequestPlatform.VRTMAX)
 
     page.goto("https://www.vrt.be/vrtmax/", wait_until='networkidle')
     handle_vrt_consent_popup(page)
@@ -86,6 +87,8 @@ def extract_vrt_cookies():
   finally:
     if browser is not None:
       browser.close()
+    if playwright is not None:
+      playwright.stop()
 
   # get cookie named 'vrtnu-site_profile_vt'
   vrt_token = next(c['value'] for c in cookies if c['name'] == 'vrtnu-site_profile_vt')

@@ -24,10 +24,11 @@ def handle_streamz_consent_popup(page):
 
 def get_streamz_data(video_page_url: str):
   browser = None
+  playwright = None
   config = None
 
   try:
-    browser, page = create_playwright_page(DLRequestPlatform.STREAMZ)
+    playwright, browser, page = create_playwright_page(DLRequestPlatform.STREAMZ)
 
     page.goto("https://www.streamz.be/", wait_until="networkidle")
     handle_streamz_consent_popup(page)
@@ -83,6 +84,8 @@ def get_streamz_data(video_page_url: str):
   finally:
     if browser is not None:
       browser.close()
+    if playwright is not None:
+      playwright.stop()
 
   return config
 

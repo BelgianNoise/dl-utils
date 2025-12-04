@@ -8,7 +8,6 @@ from playwright_stealth import stealth_sync
 from ..models.dl_request_platform import DLRequestPlatform
 
 user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 OPR/114.0.0.0'
-playwright = sync_playwright().start()
 
 def get_storage_state_location(platform: DLRequestPlatform) -> str:
   '''
@@ -38,6 +37,7 @@ def create_playwright_page(platform: DLRequestPlatform) -> tuple[Playwright, Bro
   :return: a tuple containing the browser and page objects
   '''
 
+  playwright = sync_playwright().start()
   browser = playwright.chromium.launch(
     headless=os.getenv('HEADLESS', 'true') == 'true',
     slow_mo=200,
@@ -50,4 +50,4 @@ def create_playwright_page(platform: DLRequestPlatform) -> tuple[Playwright, Bro
   page = custom_context.new_page()
   stealth_sync(page)
 
-  return (browser, page)
+  return (playwright, browser, page)
