@@ -223,22 +223,52 @@ def get_video_metadata(stream_id, video_token):
 
   return (drm_token, mpd_url)
 
-def get_license_response(challenge, drm_token):
+def get_license_response(challengeBinary, drm_token):
   '''
   Get Widevine response from Vualto license server
 
   :return: Widevine reponse in base64
   '''
+  challenge_b64 = base64.b64encode(challengeBinary).decode('utf-8')
   data = {
-    'drm_info': list(challenge),
-    'token':  drm_token
+    'drm_info': challenge_b64,
+    'token':  drm_token,
   }
-  license = requests.post('https://widevine-proxy.drm.technology/proxy', json=data)
-  license.raise_for_status()
-  response = license.content
-  logger.debug(f'Response: {base64.b64encode(response)}')
+  resp = requests.post(
+    'https://widevine-proxy.drm.technology/proxy',
+    json=data,
+    headers={
+      'Origin': 'https://www.vrt.be',
+      'Referer': 'https://www.vrt.be/',
+      'User-Agent': user_agent,
+      'X-Vudrm-Token': drm_token,
+      'Content-Type': 'application/json',
+    }
+  )
+  resp.raise_for_status()
+  response_bytes = resp.content
+  response_b64 = base64.b64encode(response_bytes).decode('utf-8')
+  logger.debug(f'Response: {response_b64}')
 
-  return response
+  return response_b64
+
+def get_pssh_box(mpd_url: str) -> str:
+  if 'remix.ism' in mpd_url:
+    content_id = urlparse(mpd_url).path.split('/')[2]
+  else:
+    pattern = r'(vid-[^/]+?)(?=_drm|\.ism|/)'
+    match = re.search(pattern, mpd_url)
+    assert match, f'Failed to extract content ID from MPD URL: {mpd_url}'
+    content_id = match.group(1)
+
+  logger.debug(f'Content ID: {content_id}')
+  pssh = pssh_box.main([
+    '--widevine-system-id',
+    '--content-id', bytes(content_id, "utf-8").hex(),
+    '--protection-scheme', 'cenc',
+    '--base64',
+  ], force_protection_scheme=True)
+  return pssh
 
 def VRTMAX_DL(dl_request: DLRequest):
 
@@ -254,13 +284,6 @@ def VRTMAX_DL(dl_request: DLRequest):
   video_token = get_video_token(vrt_token, '')
   drm_token, mpd_url = get_video_metadata(stream_id, video_token)
 
-  # Old and new MPD URL format are both still in use
-  if 'remix.ism' in mpd_url:
-    content_id = urlparse(mpd_url).path.split('/')[2]
-  else:
-    content_id = urlparse(mpd_url).path.split('/')[3]
-  logger.debug(f'Content ID: {content_id}')
-
   filename = dl_request.output_filename
   if not filename:
     filename = parse_filename(title)
@@ -269,13 +292,7 @@ def VRTMAX_DL(dl_request: DLRequest):
   # retrieve the keys if DRM
   keys = {}
   if '_drm_' in mpd_url or drm_token:
-    # Generate keys
-    pssh = pssh_box.main([
-      '--widevine-system-id',
-      '--content-id', bytes(content_id, "utf-8").hex(),
-      '--protection-scheme', 'cenc',
-      '--base64',
-    ], force_protection_scheme=True)
+    pssh = get_pssh_box(mpd_url)
     logger.debug(f'PSSH: {pssh}')
 
     myCDM = Local_CDM()
