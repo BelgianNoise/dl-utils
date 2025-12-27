@@ -256,7 +256,7 @@ def get_pssh_box(mpd_url: str) -> str:
   if 'remix.ism' in mpd_url:
     content_id = urlparse(mpd_url).path.split('/')[2]
   else:
-    pattern = r'(vid-[^/]+?)(?=_drm|\.ism|/)'
+    pattern = r'((?:vid|pl)-[^/]+?)(?=_drm|\.ism|/)'
     match = re.search(pattern, mpd_url)
     assert match, f'Failed to extract content ID from MPD URL: {mpd_url}'
     content_id = match.group(1)
