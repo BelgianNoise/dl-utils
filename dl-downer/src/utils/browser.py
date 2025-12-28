@@ -31,7 +31,7 @@ def get_storage_state_location(platform: DLRequestPlatform) -> str:
 
   return p
 
-def create_playwright_page(platform: DLRequestPlatform) -> tuple[Playwright, Browser, Page]:
+def create_playwright_page(platform: DLRequestPlatform) -> tuple[Browser, Page]:
   '''
   Create a playwright browser and page with the correct state for the given platform.
   
