@@ -19,6 +19,7 @@ from ..utils.filename import parse_filename
 from ..utils.local_cdm import Local_CDM
 from ..utils.download_video_nre import download_video_nre
 from ..utils.browser import create_playwright_page, get_storage_state_location, user_agent
+from .const.VRTMAX_graphql_query import VRTMAX_graphql_query
 
 headers = {
   'User-Agent': user_agent,
@@ -98,79 +99,65 @@ def get_graphql_metadata(url_path, cookies):
 
   :return: tuple of program title, name, and stream_id
   '''
-  graphql_query = '''
-  query VideoPage($pageId: ID!) {
-    page(id: $pageId) {
-      ... on EpisodePage {
-        episode {
-          id
-          title
-          whatsonId
-          brand
-          brandLogos {
-            type
-            width
-            height
-            primary
-            mono
-          }
-          logo
-          durationValue
-          durationSeconds
-          onTimeRaw
-          offTimeRaw
-          ageRaw
-          regionRaw
-          announcementValue
-          name
-          permalink
-          episodeNumberRaw
-          episodeNumberValue
-          subtitle
-          richDescription {
-            html
-          }
-          program {
-            id
-            link
-            title
-          }
-          watchAction {
-            streamId
-            videoId
-            episodeId
-            avodUrl
-            resumePoint
-          }
-        }
-      }
-    }
-  }
-  '''
-
   json_data = {
-    'query': graphql_query,
-    'operationName': 'VideoPage',
+    'query': VRTMAX_graphql_query,
+    'operationName': 'EpisodePage',
     'variables': {
-      'pageId': url_path + '.model.json',
+      'pageId': url_path,
     },
   }
 
   response = requests.post('https://www.vrt.be/vrtnu-api/graphql/public/v1', cookies=cookies, headers=headers, json=json_data)
-  # logger.debug(f'GraphQL response: {response.text}')
+  logger.debug(f'GraphQL response: {response.text}')
   body = response.json()
 
-  episode_name = body['data']['page']['episode']['name']
-  program_title = body['data']['page']['episode']['program']['title']
-  s_and_e = re.search(r'[sS]\d{1,4}[eEaA]\d{1,4}', episode_name)
-  if s_and_e:
-    title = f'{program_title} {s_and_e.group(0)}'
+  program_title = body['data']['page']['player']['subtitle']
+  # "<program_title> - s<year>a<episode> - <dd/mm/yyyy hh:mm>"
+  # source_program_name = body['data']['page']['modes'][0]['cimMediaTrackingData']['programName'].
+
+  episode = None
+  season = None
+  # parse season and episode from metadata (loop over secondary metadata)
+  season = None
+  episode = None
+  for meta in body['data']['page']['components'][0].get('secondaryMeta', []):
+    short_value = meta.get('shortValue') or ''
+    long_value = meta.get('longValue') or ''
+    value = meta.get('value') or ''
+
+    if not season:
+      # try season patterns: "S<number>" or "Seizoen <number>"
+      season_match = (
+        re.search(r'S(\d+)', short_value) or
+        re.search(r'Seizoen\s+(\d+)', long_value) or
+        re.search(r'Seizoen\s+(\d+)', value)
+      )
+      if season_match:
+        season = season_match.group(1)
+
+    if not episode:
+      # try episode patterns: "Afl.<number>" or "Aflevering <number>"
+      episode_match = (
+        re.search(r'Afl\.?(\d+)', short_value) or
+        re.search(r'Aflevering\s+(\d+)', long_value) or
+        re.search(r'Afl\.?(\d+)', value)
+      )
+      if episode_match:
+        episode = episode_match.group(1)
+
+    if season and episode:
+      break
+
+  if season and episode:
+    title = f'{program_title} S{season}E{episode}' # should always occur for series
   else:
-    title = episode_name
+    title = program_title # usually occurs for movies
   logger.debug(f'Title: {title}')
 
-  stream_id = body['data']['page']['episode']['watchAction']['streamId']
+  stream_id = body['data']['page']['player']['modes'][0]['streamId']
   logger.debug(f'Stream ID: {stream_id}')
+  if not stream_id:
+    raise Exception('Stream ID not found in GraphQL response')
 
   return (title, stream_id)
 
