@@ -110,6 +110,7 @@ def get_graphql_metadata(url_path, cookies):
   response = requests.post('https://www.vrt.be/vrtnu-api/graphql/public/v1', cookies=cookies, headers=headers, json=json_data)
   logger.debug(f'GraphQL response: {response.text}')
   body = response.json()
+  bodyString = json.dumps(body)
 
   program_title = body['data']['page']['player']['subtitle']
   # "<program_title> - s<year>a<episode> - <dd/mm/yyyy hh:mm>"
@@ -120,33 +121,38 @@ def get_graphql_metadata(url_path, cookies):
   # parse season and episode from metadata (loop over secondary metadata)
   season = None
   episode = None
-  for meta in body['data']['page']['components'][0].get('secondaryMeta', []):
-    short_value = meta.get('shortValue') or ''
-    long_value = meta.get('longValue') or ''
-    value = meta.get('value') or ''
 
-    if not season:
-      # try season patterns: "S<number>" or "Seizoen <number>"
-      season_match = (
-        re.search(r'S(\d+)', short_value) or
-        re.search(r'Seizoen\s+(\d+)', long_value) or
-        re.search(r'Seizoen\s+(\d+)', value)
-      )
-      if season_match:
-        season = season_match.group(1)
+  # find first occurence of /[sS](\d+)[aA](\d+)/
+  regex_result = re.search(r'[sS](\d+)[aAeE](\d+)', bodyString)
+  if regex_result:
+    season = regex_result.group(1).zfill(2)
+    episode = regex_result.group(2).zfill(2)
+  if not season:
+    # find occurence of /Seizoen\s(\d+)/
+    regex_result = re.search(r'Seizoen\s(\d+)', bodyString)
+    if regex_result:
+      season = regex_result.group(1).zfill(2)
+  if not season:
+    # find occurence of /\"$sena\":\"([^\"]+)\"/
+    regex_result = re.search(r'\"\$sena\":\"([^\"]+)\"', bodyString)
+    if regex_result:
+      season = regex_result.group(1).zfill(2)
 
-    if not episode:
-      # try episode patterns: "Afl.<number>" or "Aflevering <number>"
-      episode_match = (
-        re.search(r'Afl\.?(\d+)', short_value) or
-        re.search(r'Aflevering\s+(\d+)', long_value) or
-        re.search(r'Afl\.?(\d+)', value)
-      )
-      if episode_match:
-        episode = episode_match.group(1)
-
-    if season and episode:
-      break
+  if not episode:
+    # find occurence of /Aflevering\s(\d+)/
+    regex_result = re.search(r'Aflevering\s(\d+)', bodyString)
+    if regex_result:
+      episode = regex_result.group(1).zfill(2)
+  if not episode:
+    # find occurence of /\"$epnu\":(\d+)/
+    regex_result = re.search(r'\"\$epnu\":(\d+)', bodyString)
+    if regex_result:
+      episode = regex_result.group(1).zfill(2)
+  if not episode:
+    # find occurence of /\"episodeNumber\":(\d+)/
+    regex_result = re.search(r'\"episodeNumber\":(\d+)', bodyString)
+    if regex_result:
+      episode = regex_result.group(1).zfill(2)
 
   if season and episode:
     title = f'{program_title} S{season}E{episode}' # should always occur for series
