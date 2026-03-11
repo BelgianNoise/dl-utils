@@ -5,6 +5,7 @@ import uuid
 import urllib
 import requests
 import xml.etree.ElementTree as ET
+import concurrent.futures
 
 from typing import List
 from loguru import logger
@@ -96,67 +97,108 @@ class SegmentTemplate:
     my_tmp_dir = os.path.join(tmp_dir, f'segment-template-{my_uuid}')
     os.makedirs(my_tmp_dir, exist_ok=True)
 
-    init_url = self.initialization
-    if not init_url.startswith('http'):
-      init_url = urllib.parse.urljoin(base_url, init_url)
-    # If init_url contains $RepresentationID$ but representation_id is None, raise an exception
-    if '$RepresentationID$' in init_url and representation_id is None:
-      raise Exception(f'RepresentationID is required in {init_url} (init) but not provided')
-    init_url = init_url.replace('$RepresentationID$', representation_id)
+    try:
+      init_url = self.initialization
+      if not init_url.startswith('http'):
+        init_url = urllib.parse.urljoin(base_url, init_url)
+      # If init_url contains $RepresentationID$ but representation_id is None, raise an exception
+      if '$RepresentationID$' in init_url and representation_id is None:
+        raise Exception(f'RepresentationID is required in {init_url} (init) but not provided')
+      init_url = init_url.replace('$RepresentationID$', representation_id)
 
-    # Download the init segment
-    init_file_type = init_url.split('.')[-1]
-    init_file = os.path.join(my_tmp_dir, f'init.{init_file_type}')
-    with open(init_file, 'wb') as f:
+      # Download the init segment
+      init_file_type = os.path.splitext(urllib.parse.urlparse(init_url).path)[1].lstrip('.') or 'mp4'
+      init_file = os.path.join(my_tmp_dir, f'init.{init_file_type}')
       logger.debug(f'Downloading init segment {init_url}')
-      f.write(requests.get(init_url).content)
-    
-    media_url = self.media
-    if not media_url.startswith('http'):
-      media_url = urllib.parse.urljoin(base_url, media_url)
-    # If media_url contains $RepresentationID$ but representation_id is None, raise an exception
-    if '$RepresentationID$' in media_url and representation_id is None:
-      raise Exception(f'RepresentationID is required in {media_url} (media) but not provided')
+      init_response = requests.get(init_url, timeout=20)
+      init_response.raise_for_status()
+      with open(init_file, 'wb') as f:
+        f.write(init_response.content)
 
-    # Download all segments
-    logger.info(f'Downloading {len(self.segments)} segments ({self.start_number}-{self.start_number + len(self.segments)}) ...')
-    file_type = media_url.split('.')[-1]
+      media_url = self.media
+      if not media_url.startswith('http'):
+        media_url = urllib.parse.urljoin(base_url, media_url)
+      # If media_url contains $RepresentationID$ but representation_id is None, raise an exception
+      if '$RepresentationID$' in media_url and representation_id is None:
+        raise Exception(f'RepresentationID is required in {media_url} (media) but not provided')
 
-    import concurrent.futures
+      # Download all segments
+      logger.info(f'Downloading {len(self.segments)} segments ({self.start_number}-{self.start_number + len(self.segments)}) ...')
+      file_type = os.path.splitext(urllib.parse.urlparse(media_url).path)[1].lstrip('.') or 'm4s'
 
-    def download_segment(segment_url, segment_file):
-      response = requests.get(segment_url)
-      with open(segment_file, 'wb') as f:
-        f.write(response.content)
-    # use 4 or 75% of CPU threads, whichever is higher
-    max_threads = max(4, int(os.cpu_count() * 0.75))
-    logger.debug(f'Using {max_threads} threads to download segments')
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
-      futures = []
-      for i, segment in enumerate(self.segments):
-        segment = self.segments[i]
-        segment_file = os.path.join(my_tmp_dir, f'segment_{str(i).zfill(6)}.{file_type}')
+      # use 4 or 75% of CPU threads, whichever is higher
+      cpu_count = os.cpu_count() or 4
+      max_threads = max(4, int(cpu_count * 0.75))
+      logger.debug(f'Using {max_threads} threads to download segments')
 
-        segment_url = media_url
-        segment_url = segment_url.replace('$RepresentationID$', representation_id)
-        segment_url = segment_url.replace('$Time$', str(segment.start))
-        segment_url = segment_url.replace('$Number$', str(i + self.start_number))
+      def download_segment(index: int, segment_url: str, segment_file: str):
+        retries = 3
+        last_error = None
+        for attempt in range(1, retries + 1):
+          try:
+            response = requests.get(segment_url, timeout=20)
+            response.raise_for_status()
+            if not response.content:
+              raise Exception('Empty segment response')
+            with open(segment_file, 'wb') as f:
+              f.write(response.content)
+            return
+          except Exception as error:
+            last_error = error
+            if attempt < retries:
+              logger.warning(f'Segment {index} failed on attempt {attempt}/{retries}: {error}. Retrying...')
+              time.sleep(0.5 * attempt)
+        raise Exception(f'Failed to download segment {index} after {retries} attempts: {segment_url}') from last_error
 
-        futures.append(executor.submit(download_segment, segment_url, segment_file))
+      future_to_segment = {}
+      with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
+        for i, segment in enumerate(self.segments):
+          segment_file = os.path.join(my_tmp_dir, f'segment_{str(i).zfill(6)}.{file_type}')
 
-      # Wait for all the futures to complete
-      concurrent.futures.wait(futures)
-    
-    # Combine init and segments into one file
-    out_file = os.path.join(tmp_dir, f'output-{my_uuid}.mp4')
-    with open(out_file, 'wb') as f:
-      f.write(open(init_file, 'rb').read())
-      for i in range(len(self.segments)):
-        segment_file = os.path.join(my_tmp_dir, f'segment_{str(i).zfill(6)}.{file_type}')
-        f.write(open(segment_file, 'rb').read())
+          segment_url = media_url
+          segment_url = segment_url.replace('$RepresentationID$', representation_id)
+          segment_url = segment_url.replace('$Time$', str(segment.start))
+          segment_url = segment_url.replace('$Number$', str(i + self.start_number))
 
-    #Delete own tmp folder
-    shutil.rmtree(my_tmp_dir)
+          future = executor.submit(download_segment, i, segment_url, segment_file)
+          future_to_segment[future] = i
 
-    logger.info(f'Downloaded segment template {self.initialization} to {out_file} in {time.time() - timer_start:.2f}s')
-    return out_file
+        failed_segments = []
+        for future in concurrent.futures.as_completed(future_to_segment):
+          try:
+            future.result()
+          except Exception as error:
+            failed_segments.append((future_to_segment[future], error))
+
+      if failed_segments:
+        failed_segments = sorted(failed_segments, key=lambda item: item[0])
+        first_segment, first_error = failed_segments[0]
+        raise Exception(
+          f'{len(failed_segments)} segment(s) failed to download. First failed segment index: '
+          f'{first_segment}. Error: {first_error}'
+        ) from first_error
+
+      # Combine init and segments into one file
+      out_file = os.path.join(tmp_dir, f'output-{my_uuid}.mp4')
+      with open(out_file, 'wb') as f:
+        with open(init_file, 'rb') as init_f:
+          f.write(init_f.read())
+        missing_files = []
+        for i in range(len(self.segments)):
+          segment_file = os.path.join(my_tmp_dir, f'segment_{str(i).zfill(6)}.{file_type}')
+          if not os.path.exists(segment_file):
+            missing_files.append(segment_file)
+            continue
+          with open(segment_file, 'rb') as segment_f:
+            f.write(segment_f.read())
+
+        if missing_files:
+          raise FileNotFoundError(
+            f'{len(missing_files)} segment file(s) are missing before merge. First missing: {missing_files[0]}'
+          )
+
+      logger.info(f'Downloaded segment template {self.initialization} to {out_file} in {time.time() - timer_start:.2f}s')
+      return out_file
+    finally:
+      # Delete own tmp folder even when a download/merge error occurs.
+      shutil.rmtree(my_tmp_dir, ignore_errors=True)
