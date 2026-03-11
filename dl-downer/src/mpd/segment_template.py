@@ -27,12 +27,12 @@ class SegmentTemplate:
     self.start_number = start_number
     self.presentation_time_offset = presentation_time_offset
     self.segments: List[Segment] = []
-  
+
   def __str__(self):
     return f'<SegmentTemplate(initialization={self.initialization}, media={self.media}, timescale={self.timescale}, start_number={self.start_number}, presentation_time_offset={self.presentation_time_offset}, segments={len(self.segments)})>'
   def __repr__(self):
     return self.__str__()
-  
+
   @staticmethod
   def from_element(element: ET.Element):
     logger.debug(f'Parsing SegmentTemplate with initialization: {element.get("initialization")}')
@@ -55,7 +55,7 @@ class SegmentTemplate:
       # sometimes the first segment does not have a start time
       elif segment_template.start_number is not None:
         current_t = segment_template.start_number
-      
+
       for segment in segments:
         dur = int(segment.get('d'))
         seg_t = None
