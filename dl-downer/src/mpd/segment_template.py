@@ -136,12 +136,7 @@ class SegmentTemplate:
         last_error = None
         for attempt in range(1, retries + 1):
           try:
-            response = requests.get(segment_url, timeout=20)
-            response.raise_for_status()
-            if not response.content:
-              raise Exception('Empty segment response')
-            with open(segment_file, 'wb') as f:
-              f.write(response.content)
+            download_segment_file(segment_url, segment_file)
             return
           except Exception as error:
             last_error = error
@@ -149,6 +144,14 @@ class SegmentTemplate:
               logger.warning(f'Segment {index} failed on attempt {attempt}/{retries}: {error}. Retrying...')
               time.sleep(0.5 * attempt)
         raise Exception(f'Failed to download segment {index} after {retries} attempts: {segment_url}') from last_error
+
+      def download_segment_file(segment_url: str, segment_file: str):
+        response = requests.get(segment_url, timeout=20)
+        response.raise_for_status()
+        if not response.content:
+          raise Exception('Empty segment response')
+        with open(segment_file, 'wb') as f:
+          f.write(response.content)
 
       future_to_segment = {}
       with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
