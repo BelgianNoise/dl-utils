@@ -131,28 +131,6 @@ class SegmentTemplate:
       max_threads = max(4, int(cpu_count * 0.75))
       logger.debug(f'Using {max_threads} threads to download segments')
 
-      def download_segment(index: int, segment_url: str, segment_file: str):
-        retries = 3
-        last_error = None
-        for attempt in range(1, retries + 1):
-          try:
-            download_segment_file(segment_url, segment_file)
-            return
-          except Exception as error:
-            last_error = error
-            if attempt < retries:
-              logger.warning(f'Segment {index} failed on attempt {attempt}/{retries}: {error}. Retrying...')
-              time.sleep(0.5 * attempt)
-        raise Exception(f'Failed to download segment {index} after {retries} attempts: {segment_url}') from last_error
-
-      def download_segment_file(segment_url: str, segment_file: str):
-        response = requests.get(segment_url, timeout=20)
-        response.raise_for_status()
-        if not response.content:
-          raise Exception('Empty segment response')
-        with open(segment_file, 'wb') as f:
-          f.write(response.content)
-
       future_to_segment = {}
       with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
         for i, segment in enumerate(self.segments):
@@ -163,7 +141,7 @@ class SegmentTemplate:
           segment_url = segment_url.replace('$Time$', str(segment.start))
           segment_url = segment_url.replace('$Number$', str(i + self.start_number))
 
-          future = executor.submit(download_segment, i, segment_url, segment_file)
+          future = executor.submit(self._download_segment, i, segment_url, segment_file)
           future_to_segment[future] = i
 
         failed_segments = []
@@ -205,3 +183,23 @@ class SegmentTemplate:
     finally:
       # Delete own tmp folder even when a download/merge error occurs.
       shutil.rmtree(my_tmp_dir, ignore_errors=True)
+
+  @staticmethod
+  def _download_segment(index: int, segment_url: str, segment_file: str):
+    retries = 3
+    last_error = None
+    for attempt in range(1, retries + 1):
+      try:
+        response = requests.get(segment_url, timeout=20)
+        response.raise_for_status()
+        if not response.content:
+          raise Exception('Empty segment response')
+        with open(segment_file, 'wb') as f:
+          f.write(response.content)
+        return
+      except Exception as error:
+        last_error = error
+        if attempt < retries:
+          logger.warning(f'Segment {index} failed on attempt {attempt}/{retries}: {error}. Retrying...')
+          time.sleep(0.5 * attempt)
+    raise Exception(f'Failed to download segment {index} after {retries} attempts: {segment_url}') from last_error
