@@ -38,6 +38,20 @@ def download_dl_request(
     logger.error(f'Unsupported platform: {dl_request.platform}')
     raise Exception('Unsupported platform')
 
+  # Validate downloader result before proceeding
+  if result is None:
+    logger.error(f'Downloader returned no result for platform: {dl_request.platform}')
+    raise RuntimeError('Download failed: no result returned from downloader')
+  if not isinstance(result, DownloadResult):
+    logger.error(f'Downloader returned unexpected result type for platform {dl_request.platform}: {type(result)}')
+    raise TypeError('Download failed: unexpected downloader result type')
+  if not getattr(result, 'file_path', None):
+    logger.error(f'DownloadResult missing file_path for platform: {dl_request.platform}')
+    raise ValueError('Download failed: missing file_path in downloader result')
+  if not os.path.exists(result.file_path):
+    logger.error(f'Downloaded file does not exist at expected path: {result.file_path}')
+    raise FileNotFoundError(f'Download failed: file not found at {result.file_path}')
+
   # --- Centralized filename pattern logic ---
   title = dl_request.output_filename if dl_request.output_filename else result.title
 
