@@ -35,10 +35,10 @@ def concat_files(
   '''Concatenates all files into one file using ffmpeg'''
 
   logger.debug(f'Concatenating files {files} into {out_file}')
-  
+
   # Create a temporary folder
   my_uuid = str(uuid.uuid4())[:8]
-  my_tmp_dir = os.path.join(os.path.dirname(files[0]), f'/concat-{my_uuid}')
+  my_tmp_dir = os.path.join(os.path.dirname(files[0]), f'concat-{my_uuid}')
   os.makedirs(my_tmp_dir, exist_ok=True)
 
   # copy all files to temporary folder
@@ -76,7 +76,7 @@ def merge_files(
   output_file: str,
 ):
   command = [ 'ffmpeg' ]
-  
+
   for input_file in input_files:
     command.extend([
       '-i', input_file,

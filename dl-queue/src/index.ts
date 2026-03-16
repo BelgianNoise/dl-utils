@@ -1,6 +1,5 @@
 import express from 'express';
 import { config } from 'dotenv';
-import bodyParser from 'body-parser';
 import expressAsyncHandler from 'express-async-handler';
 import { getQueueHandler } from './handlers/get-queue';
 import { postQueueAddHandler } from './handlers/post-queue-add';
@@ -38,7 +37,7 @@ testDatabaseConnection().then(() => {
 });
 
 const app = express();
-app.use(bodyParser.json());
+app.use(express.json());
 const port = process.env.PORT || 3000;
 
 app.use((req, res, next) => {
