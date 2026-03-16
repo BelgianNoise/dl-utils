@@ -160,7 +160,7 @@ def GOPLAY_DL(dl_request: DLRequest) -> DownloadResult:
   script_tag = re.search(r'<script>(?:(?!</?script>).)*playerContainer(?:(?!</?script>).)*</script>', page_content)
   if script_tag is None:
     logger.error('No video data found')
-    return
+    raise RuntimeError('No video data found in GOPLAY page')
   script_tag_str = script_tag.group(0)
 
   video_uuid = re.search(r'\\"videoId\\":\\"([^"]+?)\\"', script_tag_str).group(1)
@@ -171,7 +171,7 @@ def GOPLAY_DL(dl_request: DLRequest) -> DownloadResult:
     title = re.search(r'\\"title\\":\\"([^"]+?)\\"', script_tag_str).group(1)
     title = parse_filename(title)
   else:
-    title = dl_request.output_filename
+    title = parse_filename(dl_request.output_filename)
 
   logger.debug(f'Video uuid: {video_uuid}')
   logger.debug(f'Type: {type_form}')
