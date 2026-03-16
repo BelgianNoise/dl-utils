@@ -27,8 +27,7 @@ ENV AUTH_STREAMZ_EMAIL=
 ENV AUTH_STREAMZ_PASSWORD=
 
 ENV DL_GOPLAY_MERGE_METHOD=period
-# Default set in code
-ENV DL_OUTPUT_PATTERN={platform}/{title}.S{season}E{episode}.{extension} 
+ENV DL_OUTPUT_PATTERN=
 
 ENV PUID=6969
 ENV PGID=6969
