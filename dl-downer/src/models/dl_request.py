@@ -1,4 +1,5 @@
 import os
+
 from datetime import datetime
 
 from ..models.dl_request_status import DLRequestStatus
@@ -86,6 +87,7 @@ class DLRequest:
     self.status = new_status
     self.updated = datetime.now()
 
+  # Deprecated: superseded by apply_output_pattern
   def get_full_filename_path(
     self,
     filename: str,

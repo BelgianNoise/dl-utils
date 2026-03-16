@@ -4,6 +4,8 @@ import subprocess
 from loguru import logger
 
 from ..models.dl_request import DLRequest
+from ..models.download_result import DownloadResult
+from ..models.dl_request_platform import DLRequestPlatform
 
 def YOUTUBE_DL(dl_request: DLRequest):
   
@@ -35,3 +37,11 @@ def YOUTUBE_DL(dl_request: DLRequest):
 
   logger.debug(f'Running command: {command}')
   subprocess.run(command)
+
+  return DownloadResult(
+    file_path=file_path,
+    title=filename.rsplit('.', 1)[0],
+    platform=DLRequestPlatform.YOUTUBE.value,
+    extension='mkv',
+    suggested_filepath=file_path,
+  )

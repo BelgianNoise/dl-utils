@@ -7,6 +7,7 @@ from loguru import logger
 
 from ..models.dl_request import DLRequest
 from ..models.dl_request_platform import DLRequestPlatform
+from ..models.download_result import DownloadResult
 from ..utils.download_video_nre import download_video_nre
 from ..utils.local_cdm import Local_CDM
 from ..utils.filename import parse_filename
@@ -110,6 +111,22 @@ def extract_dash_stream_info(config) -> dict:
     'auth_token': dash_stream['drm']['com.widevine.alpha']['drmtoday']['authToken'],
   }
 
+def extract_metadata_fields(config, output_filename=None):
+  """Extract title, season, episode from config metadata."""
+  if output_filename:
+    return output_filename, None, None
+
+  metadata = config['video']['metadata']
+  if 'episode' not in metadata:
+    return metadata['title'], None, None
+
+  ep_order = metadata['episode'].get('order')
+  ep = str(ep_order if ep_order is not None else 0).zfill(2)
+  season = str(metadata['episode']['season']['order']).zfill(2)
+  title = metadata['program']['title']
+  return title, season, ep
+
+# Deprecated: use extract_metadata_fields instead
 def generate_filename_from_metadata(config, output_filename=None):
   """Generate filename from metadata or use provided filename"""
   if output_filename:
@@ -198,7 +215,7 @@ def download_and_insert_subtitles(config, downloaded_file, preferred_lang='nl-tt
   insert_subtitle(downloaded_file, subtitle_filename)
   os.remove(subtitle_filename)
 
-def process_dpg_media_download(config, dl_request, platform, origin_url='https://www.vtmgo.be'):
+def process_dpg_media_download(config, dl_request, platform, origin_url='https://www.vtmgo.be') -> DownloadResult:
   """
   Common download logic for DPG Media platforms (VTMGO, STREAMZ)
   This can be called from both VTMGO_DL and STREAMZ_DL functions
@@ -213,9 +230,15 @@ def process_dpg_media_download(config, dl_request, platform, origin_url='https:/
   logger.debug(f'License: {license_url}')
   logger.debug(f'Auth token: {auth_token}')
 
-  # Generate filename
-  filename = generate_filename_from_metadata(config, dl_request.output_filename)
-  logger.debug(f'Filename: {filename}')
+  # Extract metadata fields separately
+  title, season, episode = extract_metadata_fields(config, dl_request.output_filename)
+
+  # Build intermediate filename for download_video_nre
+  if season and episode:
+    intermediate_filename = parse_filename(f'{title}.S{season}E{episode}')
+  else:
+    intermediate_filename = parse_filename(title)
+  logger.debug(f'Filename: {intermediate_filename}')
 
   # Get PSSH and keys
   pssh = get_pssh_from_manifest(mpd_url)
@@ -227,17 +250,25 @@ def process_dpg_media_download(config, dl_request, platform, origin_url='https:/
   # Download video
   downloaded_file = download_video_nre(
     mpd_url,
-    filename,
+    intermediate_filename,
     platform,
     dl_request.preferred_quality_matcher,
     keys=keys,
   )
 
-  # Handle subtitles
+  # Handle subtitles on the intermediate file (before the central move)
   download_and_insert_subtitles(config, downloaded_file)
 
-  return downloaded_file
+  return DownloadResult(
+    file_path=downloaded_file,
+    title=title,
+    platform=platform.value,
+    extension='mkv',
+    suggested_filepath=downloaded_file,
+    season=season,
+    episode=episode,
+  )
 
-def VTMGO_DL(dl_request: DLRequest):
+def VTMGO_DL(dl_request: DLRequest) -> DownloadResult:
   config = get_vtmgo_data(dl_request.video_page_or_manifest_url)
   return process_dpg_media_download(config, dl_request, DLRequestPlatform.VTMGO)
