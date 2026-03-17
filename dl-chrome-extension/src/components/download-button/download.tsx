@@ -1,4 +1,5 @@
 import { NotificationLevel, addNotification } from "../../notifications/notifications";
+import { buildURL } from "../../utils/url";
 
 export function downloadCurrentPage() {
   download({ url: window.location.href });
@@ -16,7 +17,7 @@ export function download(options?: {
     const quality = data.quality;
     const videoURL = options?.url || window.location.href;
 
-    const fetchUrl = new URL('/queue/add', url);
+    const fetchUrl = buildURL('queue/add', url || 'http://localhost:8282');
     console.log('Sending download request', {
       url: fetchUrl.toString(),
       token: token,
