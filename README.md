@@ -22,6 +22,21 @@ Currently supported content providers:
 
 Python script that monitors a database table for new download requests, if a new request is found the script does its best to download (and decrypt) the video (using a local CDM).
 
+<details>
+<summary>Environment variables</summary>
+
+| Variable | Description |
+|---|---|
+| `DOWNLOADS_FOLDER` | Where downloaded files are stored (default: `./downloads`) |
+| `STORAGE_STATES_FOLDER` | Playwright auth storage states (default: `./storage_states`) |
+| `CDM_FILE_PATH` | Path to the Widevine `.wvd` CDM file (default: `./cdm/cdm.wvd`) |
+| `AUTH_<PLATFORM>_EMAIL` / `_PASSWORD` | Credentials per platform (`VRTMAX`, `GOPLAY`, `VTMGO`, `STREAMZ`) |
+| `DL_OUTPUT_PATTERN` | Output filename pattern (default: `{platform}/{title}.S{season}E{episode}.{extension}`) e.g. PLEX friendly pattern: `{title_spaced}/Season {season}/{title_spaced} S{season}E{episode}.{extension}` |
+| `DL_GOPLAY_MERGE_METHOD` | DANGER (only change when certain): GoPlay stream merge method — `period` or `format` (default: `format`) |
+| `HEADLESS` | DANGER (only change when certain): Run browser in headless mode (default: `true`) |
+
+</details>
+
 ### Troubleshooting
 
 If you encouter issues with the login for VTM GO, you might need to create a storage state by turning off `HEADLESS` mode via the env variable. (You might need to do this on another machine as non-headless might not be supported in the current environment)
