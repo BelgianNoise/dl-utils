@@ -1,7 +1,6 @@
 import json
 import re
 import os
-import shutil
 import requests
 
 from loguru import logger
@@ -13,9 +12,11 @@ from ..utils.browser import create_playwright_page, get_storage_state_location
 from ..utils.download_video_nre import download_subs_nre
 from ..utils.local_cdm import Local_CDM
 from ..utils.filename import parse_filename
+from ..utils.parse_filename_fields import parse_filename_fields
 from ..utils.files import insert_subtitle
 from ..models.dl_request_platform import DLRequestPlatform
 from ..models.dl_request import DLRequest
+from ..models.download_result import DownloadResult
 
 def handle_goplay_consent_popup(page):
   '''
@@ -151,7 +152,7 @@ def get_stream_manifest_and_keys(type_form: str, video_uuid: str, is_drm: bool) 
   return stream_manifest, keys
 
 
-def GOPLAY_DL(dl_request: DLRequest):
+def GOPLAY_DL(dl_request: DLRequest) -> DownloadResult:
   # Parse video uuid from the page
   page_resp = requests.get(dl_request.video_page_or_manifest_url)
   page_content = page_resp.text
@@ -159,7 +160,7 @@ def GOPLAY_DL(dl_request: DLRequest):
   script_tag = re.search(r'<script>(?:(?!</?script>).)*playerContainer(?:(?!</?script>).)*</script>', page_content)
   if script_tag is None:
     logger.error('No video data found')
-    return
+    raise RuntimeError('No video data found in GOPLAY page')
   script_tag_str = script_tag.group(0)
 
   video_uuid = re.search(r'\\"videoId\\":\\"([^"]+?)\\"', script_tag_str).group(1)
@@ -170,7 +171,7 @@ def GOPLAY_DL(dl_request: DLRequest):
     title = re.search(r'\\"title\\":\\"([^"]+?)\\"', script_tag_str).group(1)
     title = parse_filename(title)
   else:
-    title = dl_request.output_filename
+    title = parse_filename(dl_request.output_filename)
 
   logger.debug(f'Video uuid: {video_uuid}')
   logger.debug(f'Type: {type_form}')
@@ -194,17 +195,9 @@ def GOPLAY_DL(dl_request: DLRequest):
   download_options.merge_method = merge_method
   # download the mpd
   final_file = mpd.download('./tmp', download_options)
-  # move the final file to the downloads folder
-  final_file_move_to = dl_request.get_full_filename_path(title, extension=os.path.splitext(final_file)[1][1:])
-  # Make sure the folder exists
-  os.makedirs(os.path.dirname(final_file_move_to), exist_ok=True)
-  # We can't use shutil.move or os.rename because the destination
-  # might be on a different filesystem depending on the configuration
-  shutil.copy(final_file, final_file_move_to)
-  os.remove(final_file)
-  logger.debug(f'Downloaded {title} to {final_file_move_to}')
+  extension = os.path.splitext(final_file)[1][1:]
 
-    # Attempt to download subtitles if any
+  # Download and insert subtitles while still in tmp location
   downloaded_subs = download_subs_nre(
     mpd_url=stream_manifest,
     filename=title,
@@ -213,9 +206,18 @@ def GOPLAY_DL(dl_request: DLRequest):
   )
   # if downloaded subs, insert them into the video file and remove them
   for sub in downloaded_subs:
-    insert_subtitle(
-      input_file=final_file_move_to,
-      subtitle_file=sub,
-    )
+    insert_subtitle(input_file=final_file, subtitle_file=sub)
     os.remove(sub)
+
+  parsed = parse_filename_fields(title)
+
+  return DownloadResult(
+    file_path=final_file,
+    title=parsed['title'],
+    platform=DLRequestPlatform.GOPLAY.value,
+    extension=extension,
+    suggested_filepath=dl_request.get_full_filename_path(title, extension=os.path.splitext(final_file)[1][1:]),
+    season=parsed['season'],
+    episode=parsed['episode'],
+  )
     

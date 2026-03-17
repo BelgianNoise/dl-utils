@@ -1,20 +1,15 @@
 import base64
-import hashlib
-import hmac
 import json
 import re
 import os
-import shutil
 import requests
-import time
 from loguru import logger
 from urllib.parse import urlparse
 
 from ..pssh_box import pssh_box
-from ..mpd.mpd import MPD
-from ..mpd.mpd_download_options import MPDDownloadOptions
 from ..models.dl_request_platform import DLRequestPlatform
 from ..models.dl_request import DLRequest
+from ..models.download_result import DownloadResult
 from ..utils.filename import parse_filename
 from ..utils.local_cdm import Local_CDM
 from ..utils.download_video_nre import download_video_nre
@@ -97,7 +92,7 @@ def get_graphql_metadata(url_path, cookies):
   '''
   Get video metadata from GraphQL API
 
-  :return: tuple of program title, name, and stream_id
+  :return: tuple of (program_title, season, episode, stream_id)
   '''
   json_data = {
     'query': VRTMAX_graphql_query,
@@ -154,18 +149,12 @@ def get_graphql_metadata(url_path, cookies):
     if regex_result:
       episode = regex_result.group(1).zfill(2)
 
-  if season and episode:
-    title = f'{program_title} S{season}E{episode}' # should always occur for series
-  else:
-    title = program_title # usually occurs for movies
-  logger.debug(f'Title: {title}')
-
   stream_id = body['data']['page']['player']['modes'][0]['streamId']
   logger.debug(f'Stream ID: {stream_id}')
   if not stream_id:
     raise Exception('Stream ID not found in GraphQL response')
 
-  return (title, stream_id)
+  return (program_title, season, episode, stream_id)
 
 def get_video_token(vrt_token, player_info):
   '''
@@ -263,7 +252,7 @@ def get_pssh_box(mpd_url: str) -> str:
   ], force_protection_scheme=True)
   return pssh
 
-def VRTMAX_DL(dl_request: DLRequest):
+def VRTMAX_DL(dl_request: DLRequest) -> DownloadResult:
 
   url = dl_request.video_page_or_manifest_url
   url_path = urlparse(url).path.rstrip('/')
@@ -273,14 +262,16 @@ def VRTMAX_DL(dl_request: DLRequest):
   # Transform List[Cookies] into RequestsCookieJar
   cookies = requests.utils.cookiejar_from_dict({c['name']:c['value'] for c in cookies})
 
-  title, stream_id = get_graphql_metadata(url_path, cookies)
+  program_title, season, episode, stream_id = get_graphql_metadata(url_path, cookies)
   video_token = get_video_token(vrt_token, '')
   drm_token, mpd_url = get_video_metadata(stream_id, video_token)
 
-  filename = dl_request.output_filename
-  if not filename:
-    filename = parse_filename(title)
-  logger.debug(f'Filename: {filename}')
+  title = dl_request.output_filename if dl_request.output_filename else program_title
+  # Build intermediate filename for the download tool
+  intermediate_filename = parse_filename(
+    f'{title}.S{season}E{episode}' if season and episode else title
+  )
+  logger.debug(f'Filename: {intermediate_filename}')
 
   # retrieve the keys if DRM
   keys = {}
@@ -295,25 +286,20 @@ def VRTMAX_DL(dl_request: DLRequest):
     myCDM.close()
 
   # download the video
-  download_video_nre(
+  downloaded_file = download_video_nre(
     mpd_url,
-    filename,
+    intermediate_filename,
     DLRequestPlatform.VRTMAX,
     dl_request.preferred_quality_matcher,
     keys=keys,
   )
-  return
-  # ---------- Using own MPD downloader ----------
-  # initalize mpd object
-  mpd = MPD.from_url(mpd_url)
-  download_options = MPDDownloadOptions()
-  if dl_request.preferred_quality_matcher:
-    download_options.video_resolution = dl_request.preferred_quality_matcher
-  if len(keys) > 0:
-    download_options.keys = keys
-  logger.debug('No DRM detected, downloading without decryption')
-  final_file = mpd.download('./tmp', download_options)
-  # move the final file to the downloads folder
-  final_file_move_to = dl_request.get_full_filename_path(filename)
-  shutil.move(final_file, final_file_move_to)
-  logger.debug(f'Downloaded {filename} to {final_file_move_to}')
+
+  return DownloadResult(
+    file_path=downloaded_file,
+    title=title,
+    platform=DLRequestPlatform.VRTMAX.value,
+    extension='mkv',
+    suggested_filepath=downloaded_file,
+    season=season,
+    episode=episode,
+  )
