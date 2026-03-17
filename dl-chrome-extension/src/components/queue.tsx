@@ -1,7 +1,8 @@
 import React from "react";
 import { DLRequest } from "../models/dl-request";
-import Loader from "./loader";
 import { DLRequestStatus } from "../models/dl-request-status";
+import { buildURL } from "../utils/url";
+import Loader from "./loader";
 import QueueList from "./queue-table";
 import "./queue.css";
 
@@ -18,8 +19,7 @@ const Queue = () => {
 
   function fetchData() {
     chrome.storage.sync.get(['token', 'url'], (data) => {
-      const base = (data.url || 'http://localhost:8282').replace(/\/?$/, '/');
-      const reqURL = new URL('queue', base);
+      const reqURL = buildURL('queue', data.url || 'http://localhost:8282');
       fetch(
         reqURL.toString(),
         {
