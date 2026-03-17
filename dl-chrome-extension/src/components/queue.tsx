@@ -18,7 +18,8 @@ const Queue = () => {
 
   function fetchData() {
     chrome.storage.sync.get(['token', 'url'], (data) => {
-      const reqURL = new URL('/queue', data.url || 'http://localhost:8282');
+      const base = (data.url || 'http://localhost:8282').replace(/\/?$/, '/');
+      const reqURL = new URL('queue', base);
       fetch(
         reqURL.toString(),
         {
