@@ -69,7 +69,7 @@ def handle_vtmgo_login(page):
 
   handle_vtmgo_profile_selection(page)
 
-  is_logged_in_after_form_submit = check_vtmgo_logged_in(page, timeout=20000000)
+  is_logged_in_after_form_submit = check_vtmgo_logged_in(page, timeout=300000)
   if not is_logged_in_after_form_submit:
     raise Exception('Login failed, check credentials or try running with "headless=false"?')
   logger.debug('Logged in successfully')
