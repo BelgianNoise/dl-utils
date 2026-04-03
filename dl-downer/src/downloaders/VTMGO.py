@@ -28,6 +28,52 @@ def handle_vtmgo_consent_popup(page):
   acceptButton.click()
   logger.debug('Cookies accepted')
 
+def handle_vtmgo_profile_selection(page):
+  """
+  Handle profile selection if it appears. This can happen if the account has multiple profiles or if the session expired and the user needs to select a profile again after logging in.
+  """
+  try:
+    firstProfile = page.wait_for_selector('form ol li button[name="profileId"]', timeout=3000)
+    firstProfile.click()
+    logger.debug('Profile selection detected, selected first profile')
+  except:
+    logger.debug('No profile selection screen detected, continuing ...')
+
+def check_vtmgo_logged_in(page, timeout=2000) -> bool:
+  """
+  Check if user is already logged in and return True/False.
+  """
+  try:
+    page.wait_for_selector('ul li a[href="/vtmgo/mijn-lijst"]', timeout=timeout)
+    logger.debug('Already logged in')
+    return True
+  except:
+    logger.debug('Not logged in')
+    return False
+
+def handle_vtmgo_login(page):
+  logger.debug('Logging in ...')
+  page.goto('https://www.vtmgo.be/vtmgo/aanmelden', wait_until='networkidle')
+
+  emailInput = page.wait_for_selector('input#username')
+  assert os.getenv('AUTH_VTMGO_EMAIL'), 'AUTH_VTMGO_EMAIL not set'
+  emailInput.type(os.getenv('AUTH_VTMGO_EMAIL'))
+  submitButton = page.wait_for_selector('form button[type="submit"]')
+  submitButton.click()
+
+  passwordInput = page.wait_for_selector('input#password')
+  assert os.getenv('AUTH_VTMGO_PASSWORD'), 'AUTH_VTMGO_PASSWORD not set'
+  passwordInput.type(os.getenv('AUTH_VTMGO_PASSWORD'))
+  submitButton = page.wait_for_selector('form button[type="submit"]')
+  submitButton.click()
+
+  handle_vtmgo_profile_selection(page)
+
+  is_logged_in_after_form_submit = check_vtmgo_logged_in(page, timeout=300000)
+  if not is_logged_in_after_form_submit:
+    raise Exception('Login failed, check credentials or try running with "headless=false"?')
+  logger.debug('Logged in successfully')
+
 def get_vtmgo_data(video_page_url: str):
   browser = None
   config = None
@@ -37,39 +83,12 @@ def get_vtmgo_data(video_page_url: str):
 
     page.goto("https://www.vtmgo.be/vtmgo", wait_until='networkidle')
     handle_vtmgo_consent_popup(page)
+    handle_vtmgo_profile_selection(page)
+    is_logged_in = check_vtmgo_logged_in(page)
+    if not is_logged_in:
+      handle_vtmgo_login(page)
 
-    try:
-      page.wait_for_selector('li.nav__item--userdropdown', timeout=2000)
-      logger.debug('Already logged in')
-      page.context.storage_state(path=get_storage_state_location(DLRequestPlatform.VTMGO))
-    except:
-      logger.debug('Logging in ...')
-      page.goto('https://www.vtmgo.be/vtmgo/aanmelden', wait_until='networkidle')
-
-      emailInput = page.wait_for_selector('input#username')
-      assert os.getenv('AUTH_VTMGO_EMAIL'), 'AUTH_VTMGO_EMAIL not set'
-      emailInput.type(os.getenv('AUTH_VTMGO_EMAIL'))
-      submitButton = page.wait_for_selector('form button[type="submit"]')
-      submitButton.click()
-
-      passwordInput = page.wait_for_selector('input#password')
-      assert os.getenv('AUTH_VTMGO_PASSWORD'), 'AUTH_VTMGO_PASSWORD not set'
-      passwordInput.type(os.getenv('AUTH_VTMGO_PASSWORD'))
-      submitButton = page.wait_for_selector('form button[type="submit"]')
-      submitButton.click()
-
-      # There might be a profile selection screen, if not, skip it
-      try:
-        page.wait_for_selector('div.profile button.profile__link', timeout=5000)
-      except:
-        logger.debug('No profile selection screen detected, continuing ...')
-      else:
-        profileButton = page.wait_for_selector('div.profile button.profile__link')
-        profileButton.click()
-
-      page.wait_for_selector('li.nav__item--userdropdown', timeout=200000000)
-      logger.debug('Logged in successfully')
-      page.context.storage_state(path=get_storage_state_location(DLRequestPlatform.VTMGO))
+    page.context.storage_state(path=get_storage_state_location(DLRequestPlatform.VTMGO))
 
     config_response = None
     max_wait = 10
