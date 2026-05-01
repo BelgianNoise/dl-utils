@@ -1,6 +1,7 @@
 import os
 import re
 import time
+import random
 import requests
 
 from loguru import logger
@@ -92,18 +93,19 @@ def get_vtmgo_data(video_page_url: str):
 
     config_response = None
     max_wait = 10
+    def handle_response(response):
+      nonlocal config_response
+      if 'https://videoplayer-service.dpgmedia.net/play-config/' in response.url:
+        config_response = response
+    page.on('response', handle_response)
+
     while config_response is None:
       logger.debug(f'Config response attempt {10 - max_wait + 1}')
       if max_wait == 0:
         raise Exception('Failed to get config response, tried 10 times :/')
       max_wait -= 1
-      def handle_response(response):
-        nonlocal config_response
-        if 'https://videoplayer-service.dpgmedia.net/play-config/' in response.url:
-          config_response = response
-      page.on('response', handle_response)
       page.goto(video_page_url, wait_until='load')
-      time.sleep(4)
+      time.sleep(3 + random.uniform(1, 3))
 
     logger.debug('Got config response')
     config = config_response.json()
