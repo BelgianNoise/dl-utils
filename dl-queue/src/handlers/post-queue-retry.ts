@@ -22,7 +22,7 @@ export async function postQueueRetryHandler(
   const body = req.body as PostQueueRetryRequestBody;
   const id = body?.id;
   if (!id || typeof id !== 'number') {
-    res.status(400).send('Missing required field: id');
+    res.status(400).send('Invalid or missing field: id (must be a number)');
     return;
   }
 
