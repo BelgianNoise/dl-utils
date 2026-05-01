@@ -5,6 +5,7 @@ from playwright.sync_api import sync_playwright
 from playwright.sync_api import Browser, Page
 
 from ..models.dl_request_platform import DLRequestPlatform
+from .browser_diagnostics import attach_diagnostics_listeners
 
 user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36'
 playwright = sync_playwright().start()
@@ -83,6 +84,7 @@ def create_playwright_page(platform: DLRequestPlatform) -> tuple[Browser, Page]:
     },
   )
   page = custom_context.new_page()
+  attach_diagnostics_listeners(page)
 
   # Self-contained stealth script injected before every page load.
   # We intentionally avoid playwright_stealth (last release 1.0.6, unmaintained):

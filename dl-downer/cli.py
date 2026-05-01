@@ -21,6 +21,8 @@ os.environ["DL_OUTPUT_PATTERN"] = "{platform}/{title}.S{season}E{episode}.{exten
 # Do not touch if unsure
 os.environ["DL_GOPLAY_MERGE_METHOD"] = "format"
 os.environ["HEADLESS"] = "true"
+os.environ["BROWSER_DIAGNOSTICS_ENABLED"] = "false"
+os.environ["BROWSER_DIAGNOSTICS_FOLDER"] = "./diagnostics"
 
 from src.handle_cli import handle_cli
 handle_cli()

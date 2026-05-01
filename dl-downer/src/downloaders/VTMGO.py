@@ -14,6 +14,7 @@ from ..utils.local_cdm import Local_CDM
 from ..utils.filename import parse_filename
 from ..utils.files import insert_subtitle
 from ..utils.browser import create_playwright_page, get_storage_state_location, user_agent
+from ..utils.browser_diagnostics import export_browser_diagnostics
 
 def handle_vtmgo_consent_popup(page):
   '''
@@ -102,6 +103,7 @@ def get_vtmgo_data(video_page_url: str):
     while config_response is None:
       logger.debug(f'Config response attempt {10 - max_wait + 1}')
       if max_wait == 0:
+        export_browser_diagnostics(page, 'vtmgo-config-failed')
         raise Exception('Failed to get config response, tried 10 times :/')
       page.goto('about:blank', wait_until='load')
       max_wait -= 1

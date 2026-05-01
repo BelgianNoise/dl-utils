@@ -34,7 +34,8 @@ Python script that monitors a database table for new download requests, if a new
 | `DL_OUTPUT_PATTERN` | Output filename pattern (default: `{platform}/{title}.S{season}E{episode}.{extension}`) e.g. PLEX friendly pattern: `{title_spaced}/Season {season}/{title_spaced} S{season}E{episode}.{extension}` |
 | `DL_GOPLAY_MERGE_METHOD` | DANGER (only change when certain): GoPlay stream merge method — `period` or `format` (default: `format`) |
 | `HEADLESS` | DANGER (only change when certain): Run browser in headless mode (default: `true`) |
-
+| `BROWSER_DIAGNOSTICS_ENABLED` | Export screenshots/console/network logs on browser failure (default: `false`) |
+| `BROWSER_DIAGNOSTICS_FOLDER` | Output directory for browser diagnostics (default: `./diagnostics`) |
 </details>
 
 ### Troubleshooting
