@@ -100,10 +100,11 @@ def create_playwright_page(platform: DLRequestPlatform) -> tuple[Browser, Page]:
     // Prevent detection via the Permissions API (headless returns a different state).
     const _query = window.Permissions && window.Permissions.prototype.query;
     if (_query) {
-      window.Permissions.prototype.query = (parameters) =>
-        parameters.name === 'notifications'
+      window.Permissions.prototype.query = function(parameters) {
+        return parameters.name === 'notifications'
           ? Promise.resolve({ state: Notification.permission })
-          : _query(parameters);
+          : _query.call(this, parameters);
+      };
     }
   """)
 
