@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/playwright/python:v1.42.0-jammy
+FROM mcr.microsoft.com/playwright/python:v1.52.0-jammy
 
 LABEL org.opencontainers.image.source https://github.com/BelgianNoise/dl-utils
 

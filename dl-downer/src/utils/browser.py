@@ -2,12 +2,11 @@ import os
 from loguru import logger
 
 from playwright.sync_api import sync_playwright
-from playwright.sync_api import Browser, Page, Playwright
-from playwright_stealth import stealth_sync
+from playwright.sync_api import Browser, Page
 
 from ..models.dl_request_platform import DLRequestPlatform
 
-user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 OPR/114.0.0.0'
+user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36'
 playwright = sync_playwright().start()
 
 def get_storage_state_location(platform: DLRequestPlatform) -> str:
@@ -47,6 +46,19 @@ def create_playwright_page(platform: DLRequestPlatform) -> tuple[Browser, Page]:
   browser = playwright.chromium.launch(
     headless=os.getenv('HEADLESS', 'true') == 'true',
     slow_mo=200,
+    args=[
+      # Suppresses the "Chrome is being controlled by automated software" banner
+      # and removes the most commonly checked automation flag from the browser internals.
+      '--disable-blink-features=AutomationControlled',
+      # Required when running as root inside Docker containers.
+      '--no-sandbox',
+      # Hides the "Chrome is being controlled..." info bar in non-headless mode.
+      '--disable-infobars',
+      # Avoids crashes in Docker where /dev/shm is limited.
+      '--disable-dev-shm-usage',
+      # Extensions can interfere with page behaviour; disable them for consistency.
+      '--disable-extensions',
+    ],
   )
   custom_context = browser.new_context(
     user_agent=user_agent,
@@ -151,10 +163,11 @@ def create_playwright_page(platform: DLRequestPlatform) -> tuple[Browser, Page]:
     // Prevent detection via the Permissions API (headless returns a different state).
     const _query = window.Permissions && window.Permissions.prototype.query;
     if (_query) {
-      window.Permissions.prototype.query = (parameters) =>
-        parameters.name === 'notifications'
+      window.Permissions.prototype.query = function(parameters) {
+        return parameters.name === 'notifications'
           ? Promise.resolve({ state: Notification.permission })
-          : _query(parameters);
+          : _query.call(this, parameters);
+      };
     }
   """)
 
