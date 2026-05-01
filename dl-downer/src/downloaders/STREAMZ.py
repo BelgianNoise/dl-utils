@@ -75,6 +75,7 @@ def get_streamz_data(video_page_url: str):
       logger.debug(f"Config response attempt {10 - max_wait + 1}")
       if max_wait == 0:
         raise Exception("Failed to get config response, tried 10 times :/")
+      page.goto('about:blank', wait_until='load')
       max_wait -= 1
       page.goto(video_page_url, wait_until="load")
       time.sleep(3 + random.uniform(1, 3))
