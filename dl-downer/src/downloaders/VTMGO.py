@@ -92,21 +92,28 @@ def get_vtmgo_data(video_page_url: str):
 
     page.context.storage_state(path=get_storage_state_location(DLRequestPlatform.VTMGO))
 
-    # A single-element list is used so the inner handler can mutate it without
-    # needing `nonlocal`. Python closures can mutate an outer object (list[0] = ...)
-    # but cannot rebind a plain outer name (config = ...) without `nonlocal`.
-    config = [None]
+    config = None
 
-    def handle_response(response):
-      if 'https://videoplayer-service.dpgmedia.net/play-config/' in response.url:
+    def handle_route(route):
+      # instead of listering to a response, we fully intercept the request
+      # otherwise the response body might not be available in the route handler, depending on timing
+      response = route.fetch()
+      nonlocal config
+      if config is None:
         try:
-          config[0] = response.json()
+          config = response.json()
         except Exception as e:
           logger.warning(f'Failed to read play-config response body: {e}')
-    page.on('response', handle_response)
+      # Always fulfill so the page receives the response normally.
+      route.fulfill(response=response)
+
+    page.route(
+      lambda url: 'videoplayer-service.dpgmedia.net/play-config/' in url,
+      handle_route,
+    )
 
     max_wait = 10
-    while config[0] is None:
+    while config is None:
       logger.debug(f'Config response attempt {10 - max_wait + 1}')
       if max_wait == 0:
         export_browser_diagnostics(page, 'vtmgo-config-failed')
@@ -117,7 +124,6 @@ def get_vtmgo_data(video_page_url: str):
       time.sleep(3 + random.uniform(1, 3))
 
     logger.debug('Got config response')
-    config = config[0]
 
   finally:
     if browser is not None:
