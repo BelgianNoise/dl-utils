@@ -64,15 +64,25 @@ def get_streamz_data(video_page_url: str):
         path=get_storage_state_location(DLRequestPlatform.STREAMZ)
       )
 
-    config_response = None
-    max_wait = 10
+    # A single-element list is used so the inner handler can mutate it without
+    # needing `nonlocal`. Python closures can mutate an outer object (list[0] = ...)
+    # but cannot rebind a plain outer name (config = ...) without `nonlocal`.
+    config = [None]
+
     def handle_response(response):
-      nonlocal config_response
       if "https://videoplayer-service.dpgmedia.net/play-config/" in response.url:
-        config_response = response
+        # Read the body immediately — Chrome's DevTools Protocol evicts response
+        # bodies from its resource cache shortly after the request completes.
+        # Calling .json() later (after a sleep) causes "No resource with given
+        # identifier found".
+        try:
+          config[0] = response.json()
+        except Exception as e:
+          logger.warning(f"Failed to read play-config response body: {e}")
     page.on("response", handle_response)
 
-    while config_response is None:
+    max_wait = 10
+    while config[0] is None:
       logger.debug(f"Config response attempt {10 - max_wait + 1}")
       if max_wait == 0:
         export_browser_diagnostics(page, 'streamz-config-failed')
@@ -83,7 +93,9 @@ def get_streamz_data(video_page_url: str):
       time.sleep(3 + random.uniform(1, 3))
 
     logger.debug("Got config response")
-    config = config_response.json()
+    config = config[0]
+
+    logger.debug("Got config response")
 
   finally:
     if browser is not None:
