@@ -50,7 +50,7 @@ def extract_vrt_cookies():
   try:
     browser, page = create_playwright_page(DLRequestPlatform.VRTMAX)
 
-    page.goto("https://www.vrt.be/vrtmax/", wait_until='networkidle')
+    page.goto("https://www.vrt.be/vrtmax/", wait_until='load')
     handle_vrt_consent_popup(page)
 
     wait_for_logged_in_selector = 'header button[aria-label^="Profielmenu:"]:not([aria-label="Profielmenu: Aanmelden"])'
