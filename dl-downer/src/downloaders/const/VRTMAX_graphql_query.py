@@ -316,10 +316,6 @@ VRTMAX_graphql_query = '''
       }
       __typename
     }
-    ... on ClientDrivenAction {
-      __typename
-      clientDrivenActionType
-    }
     ... on ShareAction {
       title
       url
