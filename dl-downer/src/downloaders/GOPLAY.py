@@ -10,7 +10,7 @@ from ..mpd.mpd import MPD
 from ..mpd.mpd_download_options import MPDDownloadOptions
 from ..utils.browser import create_playwright_page, get_storage_state_location
 from ..utils.download_video_nre import download_subs_nre
-from ..utils.local_cdm import Local_CDM
+from ..utils.cdm_utils.drm import get_pssh_from_manifest, get_widevine_keys, get_playready_keys, get_decryption_keys
 from ..utils.filename import parse_filename
 from ..utils.parse_filename_fields import parse_filename_fields
 from ..utils.files import insert_subtitle
@@ -102,7 +102,7 @@ def get_stream_manifest_and_drm_xml(type_form: str, video_uuid: str) -> tuple:
   video_data = video_data_resp.json()
   drm_xml = video_data['drmXml'] if 'drmXml' in video_data else ''
 
-  # Some manifest have a field called 'manifestUrls' which contains the stream manifest URL in 'dash'
+  # Some manifests have a field called 'manifestUrls' which contains the stream manifest URL in 'dash'
   if 'manifestUrls' in video_data:
     stream_manifest = video_data['manifestUrls']['dash']
     return stream_manifest, drm_xml
@@ -124,16 +124,19 @@ def get_stream_manifest_and_drm_xml(type_form: str, video_uuid: str) -> tuple:
     return stream_manifest, drm_xml
 
 def get_drm_keys(drm_xml: str, stream_manifest: str) -> dict:
-  manifest_response = requests.get(stream_manifest)
-  pssh = re.findall(r'<cenc:pssh[^>]*>(.{,120})</cenc:pssh>', manifest_response.text)[0]
-  logger.debug(f'PSSH: {pssh}')
-  cdm = Local_CDM()
-  challenge = cdm.generate_challenge(pssh)
-  headers = { 'Customdata': drm_xml }
-  lic_res = requests.post('https://widevine.keyos.com/api/v4/getLicense', data=challenge, headers=headers)
-  lic_res.raise_for_status()
-  keys = cdm.decrypt_response(lic_res.content)
-  return keys
+  pssh_info = get_pssh_from_manifest(stream_manifest)
+  logger.debug(f'PSSH: {pssh_info.pssh}')
+  logger.debug(f'License (from manifest): {pssh_info.license_url}')
+  return get_decryption_keys(
+    pssh=pssh_info.pssh,
+    # https://widevine.keyos.com/api/v4/getLicense
+    # https://playready.keyos.com/api/v4/getLicense
+    # https://drm.play.tv/?drm-type=widevine
+    license_url=pssh_info.license_url,
+    drm_provider='playready',
+    auth_token=None,
+    custom_headers={'Customdata': drm_xml},
+  )
 
 def get_stream_manifest_and_keys(type_form: str, video_uuid: str, is_drm: bool) -> tuple:
   stream_manifest = ''

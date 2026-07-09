@@ -11,7 +11,7 @@ from ..models.dl_request_platform import DLRequestPlatform
 from ..models.dl_request import DLRequest
 from ..models.download_result import DownloadResult
 from ..utils.filename import parse_filename
-from ..utils.local_cdm import Local_CDM
+from ..utils.cdm_utils.local_cdm import Local_CDM
 from ..utils.download_video_nre import download_video_nre
 from ..utils.browser import create_playwright_page, get_storage_state_location, user_agent
 from .const.VRTMAX_graphql_query import VRTMAX_graphql_query

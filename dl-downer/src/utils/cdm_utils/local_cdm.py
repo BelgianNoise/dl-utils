@@ -39,6 +39,7 @@ class Local_CDM():
     logger.debug(f'Keys: {keys}')
 
     return keys
+
   def parse_license(self, license):
     return self.decrypt_response(license)
 

@@ -1,5 +1,4 @@
 import os
-import re
 import time
 import random
 import requests
@@ -10,7 +9,7 @@ from ..models.dl_request import DLRequest
 from ..models.dl_request_platform import DLRequestPlatform
 from ..models.download_result import DownloadResult
 from ..utils.download_video_nre import download_video_nre
-from ..utils.local_cdm import Local_CDM
+from ..utils.cdm_utils.drm import extract_dash_stream_info, get_pssh_from_manifest, get_decryption_keys
 from ..utils.filename import parse_filename
 from ..utils.files import insert_subtitle
 from ..utils.browser import create_playwright_page, get_storage_state_location, user_agent
@@ -131,22 +130,6 @@ def get_vtmgo_data(video_page_url: str):
 
   return config
 
-def extract_dash_stream_info(config) -> dict:
-  """Extract DASH stream information from config"""
-  streams = config['video']['streams']
-  dash_stream = None
-  for stream in streams:
-    if stream['type'] == 'dash':
-      dash_stream = stream
-      break
-  assert dash_stream, 'No dash stream found'
-
-  return {
-    'mpd_url': dash_stream['url'],
-    'license_url': dash_stream['drm']['com.widevine.alpha']['licenseUrl'],
-    'auth_token': dash_stream['drm']['com.widevine.alpha']['drmtoday']['authToken'],
-  }
-
 def extract_metadata_fields(config, output_filename=None):
   """Extract title, season, episode from config metadata."""
   if output_filename:
@@ -182,40 +165,6 @@ def generate_filename_from_metadata(config, output_filename=None):
     filename = f'{title}.S{season:02}E{ep:02}'
 
   return parse_filename(filename)
-
-def get_pssh_from_manifest(mpd_url):
-  """Extract PSSH from MPD manifest"""
-  manifest_response = requests.get(mpd_url)
-  manifest_response.raise_for_status()
-  logger.debug(f'Manifest response status: {manifest_response.status_code}')
-
-  try:
-    pssh = re.findall(r'<cenc:pssh[^>]*>(.{,240})</cenc:pssh>', manifest_response.text)[0]
-    assert pssh
-    return pssh
-  except:
-    raise Exception(f'Failed to find pssh in manifest: {manifest_response.text}')
-
-def get_widevine_keys(pssh, license_url, auth_token, origin_url='https://www.vtmgo.be'):
-  """Get Widevine decryption keys"""
-  cdm = Local_CDM()
-  challenge = cdm.generate_challenge(pssh)
-  headers = {
-    'user-agent': user_agent,
-    'origin': origin_url,
-    'connection': 'keep-alive',
-    'accept': '*/*',
-    'accept-encoding': 'gzip, deflate, br',
-    'X-Dt-Auth-Token': auth_token,
-  }
-  license_response = requests.post(license_url, data=challenge, headers=headers)
-  license_response.raise_for_status()
-  license_response_json = license_response.json()
-  license = license_response_json['license']
-  logger.debug(f'License: {license}')
-  keys = cdm.parse_license(license)
-  cdm.close()
-  return keys
 
 def download_and_insert_subtitles(config, downloaded_file, preferred_lang='nl-tt'):
   """Download and insert subtitles if available"""
@@ -257,14 +206,17 @@ def process_dpg_media_download(config, dl_request, platform, origin_url='https:/
   This can be called from both VTMGO_DL and STREAMZ_DL functions
   """
   # Extract stream info
-  stream_info = extract_dash_stream_info(config)
-  mpd_url = stream_info['mpd_url']
+  stream_info = extract_dash_stream_info(config['video']['streams'], drm_system='playready')
+  # cut all query params from the mpd_url
+  mpd_url = stream_info['mpd_url'].split('?')[0]
   license_url = stream_info['license_url']
   auth_token = stream_info['auth_token']
+  drm_provider = stream_info['drm_provider']
 
   logger.debug(f'MPD: {mpd_url}')
   logger.debug(f'License: {license_url}')
   logger.debug(f'Auth token: {auth_token}')
+  logger.debug(f'DRM provider: {drm_provider}')
 
   # Extract metadata fields separately
   title, season, episode = extract_metadata_fields(config, dl_request.output_filename)
@@ -277,11 +229,22 @@ def process_dpg_media_download(config, dl_request, platform, origin_url='https:/
   logger.debug(f'Filename: {intermediate_filename}')
 
   # Get PSSH and keys
-  pssh = get_pssh_from_manifest(mpd_url)
+  pssh_info = get_pssh_from_manifest(mpd_url, drm_provider)
+  pssh = pssh_info.pssh
+  if pssh_info.license_url:
+    if license_url != pssh_info.license_url:
+      logger.warning(f'License URL from manifest differs from config, using manifest license URL: {pssh_info.license_url}')
+      license_url = pssh_info.license_url
   logger.debug(f'PSSH: {pssh}')
 
-  # Get Widevine keys with platform-specific origin
-  keys = get_widevine_keys(pssh, license_url, auth_token, origin_url)
+  # Get decryption keys with platform-specific origin
+  keys = get_decryption_keys(
+    pssh,
+    license_url,
+    auth_token,
+    drm_provider,
+    origin_url=origin_url,
+  )
 
   # Download video
   downloaded_file = download_video_nre(
@@ -307,4 +270,9 @@ def process_dpg_media_download(config, dl_request, platform, origin_url='https:/
 
 def VTMGO_DL(dl_request: DLRequest) -> DownloadResult:
   config = get_vtmgo_data(dl_request.video_page_or_manifest_url)
-  return process_dpg_media_download(config, dl_request, DLRequestPlatform.VTMGO)
+  return process_dpg_media_download(
+    config,
+    dl_request,
+    DLRequestPlatform.VTMGO,
+    origin_url='https://www.vtmgo.be',
+  )
