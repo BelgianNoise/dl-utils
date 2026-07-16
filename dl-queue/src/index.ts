@@ -3,6 +3,7 @@ import { config } from 'dotenv';
 import expressAsyncHandler from 'express-async-handler';
 import { getQueueHandler } from './handlers/get-queue';
 import { postQueueAddHandler } from './handlers/post-queue-add';
+import { postQueueRetryHandler } from './handlers/post-queue-retry';
 import { getLogger } from './utils/logging';
 import { testDatabaseConnection } from './utils/database';
 import { allowAllCORS } from './utils/cors';
@@ -71,6 +72,11 @@ app.post('/queue', (req, res) => {
 app.post('/queue/add', expressAsyncHandler( async(req, res) => {
   logger.info('POST /queue/add');
   await postQueueAddHandler(req, res, logger);
+}));
+
+app.post('/queue/retry', expressAsyncHandler( async(req, res) => {
+  logger.info('POST /queue/retry');
+  await postQueueRetryHandler(req, res, logger);
 }));
 
 logger.info(`Starting server on port ${port} ...`);
