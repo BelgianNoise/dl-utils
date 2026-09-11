@@ -19,6 +19,7 @@ class Representation:
     scan_type: str = None,
     segment_template: SegmentTemplate = None,
     audio_sampling_rate: int = None,
+    base_url: str = None,
   ):
     self.id = id
     self.bandwidth = bandwidth
@@ -29,6 +30,7 @@ class Representation:
     self.scan_type = scan_type
     self.segment_template = segment_template
     self.audio_sampling_rate = audio_sampling_rate
+    self.base_url = base_url
   def __str__(self):
     return f'<Representation(id={self.id}, width={self.width}, height={self.height}, frame_rate={self.frame_rate}, bandwidth={self.bandwidth}, codecs={self.codecs})>'
   def __repr__(self):
@@ -40,7 +42,10 @@ class Representation:
     seg_temp_el = el.find('SegmentTemplate')
     if seg_temp_el is not None:
       segment_template = SegmentTemplate.from_element(seg_temp_el)
-    
+
+    base_url_el = el.find('BaseURL')
+    base_url = base_url_el.text if base_url_el is not None else None
+
     return Representation(
       id=el.get('id'),
       width=int(el.get('width')) if el.get('width') is not None else None,
@@ -51,6 +56,7 @@ class Representation:
       scan_type=el.get('scanType'),
       segment_template=segment_template,
       audio_sampling_rate=int(el.get('audioSamplingRate')) if el.get('audioSamplingRate') is not None else None,
+      base_url=base_url,
     )
   
   def download(
