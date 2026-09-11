@@ -9,7 +9,7 @@ from loguru import logger
 from ..mpd.mpd import MPD
 from ..mpd.mpd_download_options import MPDDownloadOptions
 from ..utils.browser import create_playwright_page, get_storage_state_location
-from ..utils.download_video_nre import download_subs_nre
+from ..utils.download_subs_mpd import download_subs_mpd
 from ..utils.cdm_utils.drm import get_pssh_from_manifest, get_widevine_keys, get_playready_keys, get_decryption_keys
 from ..utils.filename import parse_filename
 from ..utils.parse_filename_fields import parse_filename_fields
@@ -200,12 +200,14 @@ def GOPLAY_DL(dl_request: DLRequest) -> DownloadResult:
   final_file = mpd.download('./tmp', download_options)
   extension = os.path.splitext(final_file)[1][1:]
 
-  # Download and insert subtitles while still in tmp location
-  downloaded_subs = download_subs_nre(
-    mpd_url=stream_manifest,
+  # Download and insert subtitles while still in tmp location.
+  # Subtitles are downloaded per content period and merged with the exact period
+  # durations from the manifest, so they line up with the ad-free video timeline.
+  downloaded_subs = download_subs_mpd(
+    mpd=mpd,
     filename=title,
     platform=DLRequestPlatform.GOPLAY,
-    keys=keys,
+    ignore_periods=download_options.ignore_periods,
   )
   # if downloaded subs, insert them into the video file and remove them
   for sub in downloaded_subs:
